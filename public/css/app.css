@@ -1,1 +1,19 @@
+/* Overrides */
+* {
+    border-radius: 0 !important;
+    font-family: 'Poppins', sans-serif !important;
+}
+
+input, span, a, button, p, div, label {
+    font-size: 13px !important; 
+}
+
+input {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+button {
+    outline: none !important;
+}
 
