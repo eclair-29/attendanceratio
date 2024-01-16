@@ -15,7 +15,8 @@ return new class extends Migration
     {
         Schema::create('attendances', function (Blueprint $table) {
             $table->id();
-            $table->string('employee_code');
+            $table->string('staff_code');
+            $table->foreign('staff_code')->references('staff_code')->on('staff_base_details')->onDelete('cascade');
             $table->string('date');
             $table->string('entity');
             $table->string('shift')->nullable();
@@ -32,7 +33,7 @@ return new class extends Migration
             $table->string('tardy')->nullable();
             $table->string('ut')->nullable();
             $table->string('lwop')->nullable();
-            $table->string('adjustment');
+            $table->string('adjust');
             $table->timestamps();
         });
     }

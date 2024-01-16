@@ -5,13 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Attendance extends Model
+class StaffBaseDetail extends Model
 {
     use HasFactory;
     protected $guarded = [];
 
-    public function staffBaseDetail()
+    public function attendances()
     {
-        return $this->belongsTo(StaffBaseDetail::class, 'staff_code', 'staff_code');
+        return $this->hasMany(Attendance::class, 'staff_code', 'staff_code');
     }
 }

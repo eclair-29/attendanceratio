@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Imports\AttendanceUpload;
+use App\Imports\StaffBaseDetailsUpload;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Throwable;
@@ -17,6 +18,26 @@ class AttendanceController extends Controller
     public function index()
     {
         return view('attendance.index');
+    }
+
+    public function uploadBase(Request $request)
+    {
+        $request->validate([
+            'upload_base' => 'required',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            // Excel::import(new AttendanceUpload, $request->file('upload')->store('files'));
+            (new StaffBaseDetailsUpload)->queue($request->file('upload_base')->store('files'))->chain([]);
+
+            DB::commit();
+        } catch (Throwable $th) {
+            DB::rollBack();
+            throw $th;
+        }
+
+        return redirect('/');
     }
 
     public function upload(Request $request)

@@ -15,4 +15,5 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', [AttendanceController::class, 'index']);
+Route::post('/uploadbase', [AttendanceController::class, 'uploadBase'])->name('uploadbase');
 Route::post('/upload', [AttendanceController::class, 'upload'])->name('upload');
