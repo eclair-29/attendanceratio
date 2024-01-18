@@ -1,6 +1,9 @@
+select date FROM hrardb.attendances;
 -- explain analyze
+create view hrardb.vw_consolidated_attendance as 
 select 
 	a.staff_code,
+    a.entity,
     sbd.shift_type,
     sbd.dept,
     sbd.division,
@@ -10,31 +13,20 @@ select
 		 then (
 			SELECT day_count 
             FROM hrardb.calendars 
-            WHERE MONTH = EXTRACT(MONTH FROM '2023-12-30') 
-				AND shift_type = 'shifting'
+            WHERE shift_type = 'shifting'
+                and YEAR  = EXTRACT(YEAR  FROM (SELECT date FROM hrardb.attendances  WHERE staff_code = a.staff_code LIMIT 1)) 
+				and MONTH = EXTRACT(MONTH FROM (SELECT date FROM hrardb.attendances  WHERE staff_code = a.staff_code LIMIT 1))
 		 ) * 8
 		 else (
 			SELECT day_count 
             FROM hrardb.calendars 
-            WHERE MONTH = EXTRACT(MONTH FROM '2023-12-30') 
-				AND shift_type = 'compressed'
+            WHERE shift_type = 'compressed'
+                and YEAR  = EXTRACT(YEAR  FROM (SELECT date FROM hrardb.attendances  WHERE staff_code = a.staff_code LIMIT 1)) 
+				and MONTH = EXTRACT(MONTH FROM (SELECT date FROM hrardb.attendances  WHERE staff_code = a.staff_code LIMIT 1))
 		 ) * 9.25 end 
 	as working_days,
 	
     -- lwop
-    -- (
-	-- 	SELECT count(lwop) * IF(sbd.shift_type = 'Shifting', 8, 9.25)
-	-- 	FROM hrardb.attendances 
-    --     WHERE staff_code = a.staff_code 
-    --     and lwop <= 1
-	-- 		and (lwop <= 1 and np is null)
-    --         and	(lwop <= 1 and other_leaves is null)
-    --         and	(lwop <= 1 and att_st  is null)
-    --         and	(lwop <= 1 and holiday is null)
-    --         and	(lwop <= 1 and att_end is null)
-    --         and (lwop <= 1 and (shift is null or shift != 'Rest Day')) 
-	-- ) as lwop,
-
     COUNT(
         case when a.lwop >= 1
              and (a.lwop >= 1 and a.np is null)
@@ -47,6 +39,16 @@ select
         as lwop,
 
     -- lwop: half day
+    SUM(
+        case when a.lwop < 1 and a.lwop != 0
+             and (a.lwop < 1 and a.lwop != 0 and a.np is null)
+             and (a.lwop < 1 and a.lwop != 0 and a.other_leaves is null)
+             and (a.lwop < 1 and a.lwop != 0 and a.att_st  is null)
+             and (a.lwop < 1 and a.lwop != 0 and a.holiday is null)
+             and (a.lwop < 1 and a.lwop != 0 and a.att_end is null)
+             and (a.lwop < 1 and a.lwop != 0 and (a.shift is null or a.shift != 'Rest Day')) 
+        then a.lwop end ) * (IF(sbd.shift_type = 'Shifting', 8, 9.25) / 2)
+        as lwop_half,
     
     -- sl
     COUNT(
@@ -130,7 +132,8 @@ select
 			and a.other_leaves < 1 
             and a.other_leaves != 0 
             and a.np is null
-		then 1 end) * (IF(sbd.shift_type = 'Shifting', 8, 9.25) / 2) 
+		then 1 
+        else 0 end) * (IF(sbd.shift_type = 'Shifting', 8, 9.25) / 2) 
         as aa_half,
         
 	-- el 
@@ -150,6 +153,91 @@ select
 		then 1 end) * 4
         as el_half,
         
+	-- pl
+    COUNT(
+		case when a.leave_type = 'Paternity Leave' 
+			and a.other_leaves >= 1 
+            and a.np is null 
+		then 1 end) * 8 
+        as pl,
+        
+	-- pl: half day
+    SUM(
+		case when a.leave_type = 'Paternity Leave' 
+			and a.other_leaves < 1 
+            and a.other_leaves != 0 
+            and a.np is null
+		then 1 end) * 4
+        as pl_half,
+        
+	-- spl
+    COUNT(
+		case when a.leave_type = 'Solo Parent Leave' 
+			and a.other_leaves >= 1 
+            and a.np is null 
+		then 1 end) * 8 
+        as spl,
+        
+	-- spl: half day
+    SUM(
+		case when a.leave_type = 'Solo Parent Leave' 
+			and a.other_leaves < 1 
+            and a.other_leaves != 0 
+            and a.np is null
+		then 1 end) * 4
+        as spl_half,
+        
+	-- vawc
+    COUNT(
+		case when a.leave_type = 'Violence Against Women / Children' 
+			and a.other_leaves >= 1 
+            and a.np is null 
+		then 1 end) * 8 
+        as vawc,
+        
+	-- vawc: half day
+    SUM(
+		case when a.leave_type = 'Violence Against Women / Children' 
+			and a.other_leaves < 1 
+            and a.other_leaves != 0 
+            and a.np is null
+		then 1 end) * 4
+        as vawc_half,
+	
+    -- wedding leave
+    COUNT(
+		case when a.leave_type = 'Wedding Leave' 
+			and a.other_leaves >= 1 
+            and a.np is null
+		then 1 end) * 8 
+        as wl,
+        
+	-- wedding leave: half day
+    SUM(
+		case when a.leave_type = 'Wedding Leave' 
+			and a.other_leaves < 1 
+            and a.other_leaves != 0 
+            and a.np is null
+		then 1 end) * 4
+        as wl_half,
+        
+	-- offset 
+    COUNT(
+		case when a.leave_type = 'Offset Leave' 
+			and a.other_leaves >= 1 
+            and a.np is null
+		then 1 end) * 8 
+        as offset,
+        
+	-- offset: half day
+	SUM(
+		case when a.leave_type = 'Offset Leave' 
+			and a.other_leaves < 1 
+            and a.other_leaves != 0 
+            and a.np is null
+		then 1 end) * 4
+        as offset_half,
+        
 	-- late
     SUM(
 		case when a.np is null 
@@ -166,7 +254,7 @@ select
 FROM hrardb.attendances a
 LEFT JOIN hrardb.staff_base_details sbd
 	ON a.staff_code = sbd.staff_code
--- where a.staff_code = '0000244'
-group by a.staff_code;
+-- where a.staff_code = '0100998'
+group by a.staff_code, a.entity;
 
 --

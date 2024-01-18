@@ -16,7 +16,7 @@ return new class extends Migration
         Schema::create('attendances', function (Blueprint $table) {
             $table->id();
             $table->string('staff_code');
-            $table->foreign('staff_code')->references('staff_code')->on('staff_base_details')->onDelete('cascade');
+            // $table->foreign('staff_code')->references('staff_code')->on('staff_base_details')->onDelete('cascade');
             $table->string('date');
             $table->string('entity');
             $table->string('shift')->nullable();

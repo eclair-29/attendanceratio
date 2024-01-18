@@ -18,6 +18,10 @@ class CalendarsSeeder extends Seeder
     {
         $date = Carbon::now();
         $calendars = [
+            ['day_count' => 18, 'month' => 12, 'year' => 2023, 'shift_type' => 'compressed', 'created_at' => $date, 'updated_at' => $date],
+
+            ['day_count' => 21, 'month' => 12, 'year' => 2023, 'shift_type' => 'shifting', 'created_at' => $date, 'updated_at' => $date],
+
             ['day_count' => 22, 'month' => 1, 'year' => 2024, 'shift_type' => 'compressed', 'created_at' => $date, 'updated_at' => $date],
             ['day_count' => 19, 'month' => 2, 'year' => 2024, 'shift_type' => 'compressed', 'created_at' => $date, 'updated_at' => $date],
             ['day_count' => 21, 'month' => 3, 'year' => 2024, 'shift_type' => 'compressed', 'created_at' => $date, 'updated_at' => $date],
