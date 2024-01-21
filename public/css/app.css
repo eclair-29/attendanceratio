@@ -14,6 +14,68 @@ input {
 }
 
 button {
-    outline: none !important;
+    box-shadow: none !important;
 }
 
+table {
+  box-shadow: none !important;
+  border: none !important;
+  font-size: 11px;
+}
+
+table thead th {
+    border-top: 1px solid #dee2e6 !important;
+}
+
+table thead th,
+table tbody td {
+  font-weight: 400 !important;
+  border-right: none !important;
+  border-color: #dee2e6 !important;
+  vertical-align: middle;
+}
+
+table tbody tr:last-child td {
+  border-bottom: 1px solid #dee2e6 !important;
+}
+
+table thead th:last-child,
+table tbody td:last-child {
+  border-right: 1px solid #dee2e6 !important;
+}
+
+.table-responsive::-webkit-scrollbar {
+    width: 0;
+}
+
+.list-group-item {
+    padding: 16px !important;
+}
+
+.form-text {
+    font-size: 12px !important;
+}
+
+.feather-info {
+    padding-right: 5px;
+    width: 24px;
+    height: 24px;
+}
+
+.dataTables_filter input {
+    border-color: #ced4da !important;
+}
+
+#result {
+    overflow-x: auto !important;
+}
+
+#result_length,
+#result_filter {
+    float: none !important;
+}
+
+#base_upload_btn,
+#upload_btn {
+    border-color: #ced4da;
+}

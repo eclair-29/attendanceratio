@@ -14,6 +14,11 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+Route::get('/progress', [AttendanceController::class, 'getProgress'])->name('progress');
 Route::get('/', [AttendanceController::class, 'index']);
 Route::post('/uploadbase', [AttendanceController::class, 'uploadBase'])->name('uploadbase');
 Route::post('/upload', [AttendanceController::class, 'upload'])->name('upload');
+
+Auth::routes();
+
+Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');

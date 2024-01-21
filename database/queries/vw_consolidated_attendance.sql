@@ -1,4 +1,3 @@
-select date FROM hrardb.attendances;
 -- explain analyze
 create view hrardb.vw_consolidated_attendance as 
 select 
@@ -14,15 +13,15 @@ select
 			SELECT day_count 
             FROM hrardb.calendars 
             WHERE shift_type = 'shifting'
-                and YEAR  = EXTRACT(YEAR  FROM (SELECT date FROM hrardb.attendances  WHERE staff_code = a.staff_code LIMIT 1)) 
-				and MONTH = EXTRACT(MONTH FROM (SELECT date FROM hrardb.attendances  WHERE staff_code = a.staff_code LIMIT 1))
+                and YEAR  = EXTRACT(YEAR  FROM (SELECT date FROM hrardb.attendances WHERE staff_code = a.staff_code LIMIT 1)) 
+				and MONTH = EXTRACT(MONTH FROM (SELECT date FROM hrardb.attendances WHERE staff_code = a.staff_code LIMIT 1))
 		 ) * 8
 		 else (
 			SELECT day_count 
             FROM hrardb.calendars 
             WHERE shift_type = 'compressed'
-                and YEAR  = EXTRACT(YEAR  FROM (SELECT date FROM hrardb.attendances  WHERE staff_code = a.staff_code LIMIT 1)) 
-				and MONTH = EXTRACT(MONTH FROM (SELECT date FROM hrardb.attendances  WHERE staff_code = a.staff_code LIMIT 1))
+                and YEAR  = EXTRACT(YEAR  FROM (SELECT date FROM hrardb.attendances WHERE staff_code = a.staff_code LIMIT 1)) 
+				and MONTH = EXTRACT(MONTH FROM (SELECT date FROM hrardb.attendances WHERE staff_code = a.staff_code LIMIT 1))
 		 ) * 9.25 end 
 	as working_days,
 	
@@ -255,6 +254,7 @@ FROM hrardb.attendances a
 LEFT JOIN hrardb.staff_base_details sbd
 	ON a.staff_code = sbd.staff_code
 -- where a.staff_code = '0100998'
+where sbd.staff_code not in ('999998') -- R,Guest2
 group by a.staff_code, a.entity;
 
 --

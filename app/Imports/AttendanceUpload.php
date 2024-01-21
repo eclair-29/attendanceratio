@@ -2,25 +2,40 @@
 
 namespace App\Imports;
 
-use App\Models\Attendance;
-use App\Models\Calendar;
-use App\Models\Ratio;
 use Carbon\Carbon;
-use Illuminate\Contracts\Queue\ShouldQueue;
+use App\Models\Ratio;
+use App\Models\Attendance;
+use Illuminate\Support\Str;
+use App\Models\BatchTracker;
 use Illuminate\Support\Facades\DB;
-use Maatwebsite\Excel\Concerns\Importable;
-use Maatwebsite\Excel\Concerns\RegistersEventListeners;
 use Maatwebsite\Excel\Concerns\ToModel;
-use Maatwebsite\Excel\Concerns\WithBatchInserts;
-use Maatwebsite\Excel\Concerns\WithChunkReading;
-use Maatwebsite\Excel\Concerns\WithEvents;
-use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Maatwebsite\Excel\Events\AfterBatch;
 use Maatwebsite\Excel\Events\AfterImport;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
+use Maatwebsite\Excel\Concerns\Importable;
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Events\BeforeImport;
+use Maatwebsite\Excel\Events\ImportFailed;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Maatwebsite\Excel\Concerns\WithBatchInserts;
+use Maatwebsite\Excel\Concerns\WithChunkReading;
+use Maatwebsite\Excel\Concerns\RegistersEventListeners;
+use Maatwebsite\Excel\Concerns\WithCalculatedFormulas;
+use Maatwebsite\Excel\Concerns\WithUpserts;
 
-class AttendanceUpload implements ToModel, WithHeadingRow, WithBatchInserts, WithChunkReading, ShouldQueue, WithEvents
+class AttendanceUpload implements ToModel, WithHeadingRow, WithBatchInserts, WithChunkReading, ShouldQueue, WithEvents, WithCalculatedFormulas, WithUpserts
 {
     use Importable, RegistersEventListeners;
+
+    public $fileLabel;
+    public $notificationMsg;
+
+    public function __construct(string $fileLabel, string|null $notificationMsg)
+    {
+        $this->fileLabel = $fileLabel;
+        $this->notificationMsg = $notificationMsg;
+    }
 
     /**
      * @param array $row
@@ -29,46 +44,96 @@ class AttendanceUpload implements ToModel, WithHeadingRow, WithBatchInserts, Wit
      */
     public function model(array $row)
     {
-        return new Attendance([
-            'staff_code' => $row['employee_code'],
-            'date' => Carbon::parse(Date::excelToDateTimeObject($row['date']))->toDateString(),
-            'entity' => $row['entity'],
-            'shift' => $row['shift'],
-            'shift_st' => $row['shift_st'],
-            'att_st' => $row['att_st'],
-            'shift_end' => $row['shift_end'],
-            'att_end' => $row['att_end'],
-            'late' => $row['late'],
-            'early_exit' => $row['early_exit'],
-            'holiday' => $row['holiday'],
-            'leave_type' => $row['leave_type'],
-            'np' => $row['np'],
-            'other_leaves' => $row['other_leaves'],
-            'tardy' => $row['tardy'],
-            'ut' => $row['ut'],
-            'lwop' => $row['lwop'],
-            'adjust' => $row['adjustment'],
-        ]);
+        if (Str::contains($this->fileLabel, 'PR')) {
+            if (!isset($row['id_no']) || Str::contains($row['id_no'], ['PREGNANT', 'Note', 'Working', 'SL/', 'Late'])) {
+                return null;
+            }
+        }
+
+        $attendance = Str::contains($this->fileLabel, 'PR')
+            ? new Ratio([
+                'staff_code' => $row['id_no'],
+                'entity' => $row['id_no'],
+                'division' => $row['division'],
+                'dept' => $row['dept'],
+                'section' => $row['section'],
+                'shift_type' => $row['shift'],
+                'working_days' => $row['working_days'],
+                'total_absent' => $row['days_of_absent'],
+                'absent_ratio' => $row['absent_ratio'],
+                'attendance_ratio' => $row['ratio'],
+                'sl_percentage' => $row['sl_ratio'],
+                'vl_percentage' => $row['vl_ratio'] + $row['el_ratio'],
+                'late_percentage' => $row['late_ratio'],
+                'early_exit_percentage' => $row['ut_ratio'],
+                'lwop_percentage' => $row['ua_ratio'],
+                'total_sl' => $row['sl'],
+                'total_vl' => $row['vl'] + $row['el'],
+                'total_late' => $row['late'],
+                'total_early_exit' => $row['ut'],
+                'total_lwop' => $row['ua']
+            ])
+            : new Attendance([
+                'staff_code' => $row['employee_code'],
+                'date' => Carbon::parse(Date::excelToDateTimeObject($row['date']))->toDateString(),
+                'entity' => $row['entity'],
+                'shift' => $row['shift'],
+                'shift_st' => $row['shift_st'],
+                'att_st' => $row['att_st'],
+                'shift_end' => $row['shift_end'],
+                'att_end' => $row['att_end'],
+                'late' => $row['late'],
+                'early_exit' => $row['early_exit'],
+                'holiday' => $row['holiday'],
+                'leave_type' => $row['leave_type'],
+                'np' => $row['np'],
+                'other_leaves' => $row['other_leaves'],
+                'tardy' => $row['tardy'],
+                'ut' => $row['ut'],
+                'lwop' => $row['lwop'],
+                'adjust' => $row['adjustment'],
+            ]);
+
+        return $attendance;
+    }
+
+    public function uniqueBy()
+    {
+        if (Str::contains($this->fileLabel, 'PR')) {
+            return 'staff_code';
+        }
     }
 
     public function headingRow(): int
     {
-        return 3;
+        $headingRow = Str::contains($this->fileLabel, 'PR') ? 2 : 3;
+        return $headingRow;
     }
 
     public function batchSize(): int
     {
-        return 1000;
+        $batch = Str::contains($this->fileLabel, 'PR') ? 100 : 3000;
+        return $batch;
     }
 
     public function chunkSize(): int
     {
-        return 1000;
+        $chunk = Str::contains($this->fileLabel, 'PR') ? 100 : 3000;
+        return $chunk;
     }
 
-    public function afterImport(AfterImport $event)
+    public function beforeImport(BeforeImport $event)
     {
+        clearQueueTables('attendance');
 
+        $totalRows = array_values($event->getReader()->getTotalRows())[0];
+        $batchCount = ceil($totalRows / 3000);
+
+        BatchTracker::create(['current_batch_count' => $batchCount, 'total_batch_count' => $batchCount, 'type' => 'attendance']);
+    }
+
+    public function afterBatch(AfterBatch $event)
+    {
         $consolidatedAttendances = DB::table('vw_consolidated_attendance')->get();
 
         foreach ($consolidatedAttendances as $attendance) {
@@ -114,7 +179,7 @@ class AttendanceUpload implements ToModel, WithHeadingRow, WithBatchInserts, Wit
             $earlyExitPercentage = ($totalEarlyExit / $attendance->working_days) * 100;
             $lwopPercentage = ($totalLwop / $attendance->working_days) * 100;
 
-            Ratio::create([
+            Ratio::upsert([
                 'staff_code' => $attendance->staff_code,
                 'entity' => $attendance->entity,
                 'division' => $attendance->division,
@@ -135,10 +200,39 @@ class AttendanceUpload implements ToModel, WithHeadingRow, WithBatchInserts, Wit
                 'total_late' => $totalLate,
                 'total_early_exit' => $totalEarlyExit,
                 'total_lwop' => $totalLwop
+            ], ['staff_code'], [
+                'working_days',
+                'total_absent',
+                'absent_ratio',
+                'attendance_ratio',
+                'sl_percentage',
+                'vl_percentage',
+                'late_percentage',
+                'early_exit_percentage',
+                'lwop_percentage',
+                'total_sl',
+                'total_vl',
+                'total_late',
+                'total_early_exit',
+                'total_lwop'
             ]);
-
-            Attendance::truncate();
-            // DB::table('vw_consolidated_attendance')->truncate();
         }
+
+        $currentBatch = BatchTracker::where('type', 'attendance')->first();
+        $currentBatch->update([
+            'current_batch_count' => $currentBatch->current_batch_count - 1
+        ]);
+    }
+
+    public function afterImport(AfterImport $event)
+    {
+        clearQueueTables('attendance');
+        // DB::statement("ALTER TABLE batch_trackers AUTO_INCREMENT = 1");
+        // DB::table('vw_consolidated_attendance')->truncate();
+    }
+
+    public function importFailed(ImportFailed $event)
+    {
+        dd($event->getException()->getMessage());
     }
 }

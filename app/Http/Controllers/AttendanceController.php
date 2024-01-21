@@ -2,14 +2,29 @@
 
 namespace App\Http\Controllers;
 
-use App\Imports\AttendanceUpload;
-use App\Imports\StaffBaseDetailsUpload;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Throwable;
+use App\Rules\FileNotMatch;
+use Illuminate\Http\Request;
+use App\Imports\AttendanceUpload;
+use Illuminate\Support\Facades\DB;
+use App\Rules\NoStaffBaseDataFound;
+use App\Imports\StaffBaseDetailsUpload;
+use App\Models\BatchTracker;
+use Illuminate\Support\Facades\Session;
 
 class AttendanceController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
+    public function getProgress(Request $request)
+    {
+        $currentBatch = BatchTracker::where('type', $request->type)->first();
+        return $currentBatch;
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -29,7 +44,7 @@ class AttendanceController extends Controller
         DB::beginTransaction();
         try {
             // Excel::import(new AttendanceUpload, $request->file('upload')->store('files'));
-            (new StaffBaseDetailsUpload)->queue($request->file('upload_base')->store('files'))->chain([]);
+            (new StaffBaseDetailsUpload)->queue($request->file('upload_base')->store('files/base'));
 
             DB::commit();
         } catch (Throwable $th) {
@@ -43,14 +58,16 @@ class AttendanceController extends Controller
     public function upload(Request $request)
     {
         $request->validate([
-            'upload' => 'required',
+            'upload' => ['required', new FileNotMatch, new NoStaffBaseDataFound],
         ]);
+
+        $fileLabel = $request->file('upload')->getClientOriginalName();
+        $notificationMsg = null;
 
         DB::beginTransaction();
         try {
-            // Excel::import(new AttendanceUpload, $request->file('upload')->store('files'));
-            (new AttendanceUpload)->queue($request->file('upload')->store('files'))->chain([]);
-
+            (new AttendanceUpload($fileLabel, $notificationMsg))->queue($request->file('upload')->store('files/raw'));
+            Session::put('success', $notificationMsg);
             DB::commit();
         } catch (Throwable $th) {
             DB::rollBack();
