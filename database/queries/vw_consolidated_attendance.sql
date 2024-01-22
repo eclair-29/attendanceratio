@@ -7,6 +7,15 @@ select
     sbd.dept,
     sbd.division,
     sbd.section,
+    concat(
+        EXTRACT(YEAR  FROM (SELECT date FROM hrardb.attendances WHERE staff_code = a.staff_code LIMIT 1)), '_', 
+        EXTRACT(MONTH FROM (SELECT date FROM hrardb.attendances WHERE staff_code = a.staff_code LIMIT 1)), '_', 
+        a.staff_code
+    ) as series_id,
+    concat(
+        EXTRACT(YEAR  FROM (SELECT date FROM hrardb.attendances WHERE staff_code = a.staff_code LIMIT 1)), '_', 
+        EXTRACT(MONTH FROM (SELECT date FROM hrardb.attendances WHERE staff_code = a.staff_code LIMIT 1))
+    ) as series,
     -- total working days
     case when sbd.shift_type = 'Shifting' 
 		 then (

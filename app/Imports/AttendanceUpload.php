@@ -22,19 +22,25 @@ use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\RegistersEventListeners;
 use Maatwebsite\Excel\Concerns\WithCalculatedFormulas;
+use Maatwebsite\Excel\Concerns\WithMappedCells;
 use Maatwebsite\Excel\Concerns\WithUpserts;
 
-class AttendanceUpload implements ToModel, WithHeadingRow, WithBatchInserts, WithChunkReading, ShouldQueue, WithEvents, WithCalculatedFormulas, WithUpserts
+class AttendanceUpload implements ToModel, WithHeadingRow, WithBatchInserts, WithChunkReading, ShouldQueue, WithEvents, WithCalculatedFormulas, WithUpserts, WithMappedCells
 {
     use Importable, RegistersEventListeners;
 
     public $fileLabel;
-    public $notificationMsg;
 
-    public function __construct(string $fileLabel, string|null $notificationMsg)
+    public function __construct(string $fileLabel)
     {
         $this->fileLabel = $fileLabel;
-        $this->notificationMsg = $notificationMsg;
+    }
+
+    public function mapping(): array
+    {
+        if (Str::contains($this->fileLabel, 'PR')) {
+            return ['title' => 'A1'];
+        }
     }
 
     /**
@@ -52,21 +58,23 @@ class AttendanceUpload implements ToModel, WithHeadingRow, WithBatchInserts, Wit
 
         $attendance = Str::contains($this->fileLabel, 'PR')
             ? new Ratio([
+                'series_id' => '2023_12_' . $row['id_no'],
+                'series' => '2023_12',
                 'staff_code' => $row['id_no'],
-                'entity' => $row['id_no'],
+                'entity' => $row['title'],
                 'division' => $row['division'],
                 'dept' => $row['dept'],
                 'section' => $row['section'],
                 'shift_type' => $row['shift'],
                 'working_days' => $row['working_days'],
                 'total_absent' => $row['days_of_absent'],
-                'absent_ratio' => $row['absent_ratio'],
-                'attendance_ratio' => $row['ratio'],
-                'sl_percentage' => $row['sl_ratio'],
-                'vl_percentage' => $row['vl_ratio'] + $row['el_ratio'],
-                'late_percentage' => $row['late_ratio'],
-                'early_exit_percentage' => $row['ut_ratio'],
-                'lwop_percentage' => $row['ua_ratio'],
+                'absent_ratio' => $row['absent_ratio'] * 100,
+                'attendance_ratio' => $row['ratio'] * 100,
+                'sl_percentage' => $row['sl_ratio'] * 100,
+                'vl_percentage' => ($row['vl_ratio'] + $row['el_ratio']) * 100,
+                'late_percentage' => $row['late_ratio'] * 100,
+                'early_exit_percentage' => $row['ut_ratio'] * 100,
+                'lwop_percentage' => $row['ua_ratio'] * 100,
                 'total_sl' => $row['sl'],
                 'total_vl' => $row['vl'] + $row['el'],
                 'total_late' => $row['late'],
@@ -100,7 +108,7 @@ class AttendanceUpload implements ToModel, WithHeadingRow, WithBatchInserts, Wit
     public function uniqueBy()
     {
         if (Str::contains($this->fileLabel, 'PR')) {
-            return 'staff_code';
+            return 'series_id';
         }
     }
 
@@ -180,6 +188,8 @@ class AttendanceUpload implements ToModel, WithHeadingRow, WithBatchInserts, Wit
             $lwopPercentage = ($totalLwop / $attendance->working_days) * 100;
 
             Ratio::upsert([
+                'series_id' => $attendance->series_id,
+                'series' => $attendance->series,
                 'staff_code' => $attendance->staff_code,
                 'entity' => $attendance->entity,
                 'division' => $attendance->division,
@@ -200,7 +210,13 @@ class AttendanceUpload implements ToModel, WithHeadingRow, WithBatchInserts, Wit
                 'total_late' => $totalLate,
                 'total_early_exit' => $totalEarlyExit,
                 'total_lwop' => $totalLwop
-            ], ['staff_code'], [
+            ], ['series_id'], [
+                'staff_code',
+                'series',
+                'entity',
+                'division',
+                'dept',
+                'section',
                 'working_days',
                 'total_absent',
                 'absent_ratio',

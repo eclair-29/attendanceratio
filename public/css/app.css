@@ -79,3 +79,7 @@ table tbody td:last-child {
 #upload_btn {
     border-color: #ced4da;
 }
+
+#init_notif_btn {
+    font-size: 12px !important;
+}

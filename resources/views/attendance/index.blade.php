@@ -5,18 +5,8 @@
     <div class="row">
         <div class="row justify-content-center">
             <div class="col">
-                @if (session('success'))
-                <div class="alert alert-success" role="alert">
-                    {{ session('success') }}
-                </div>
-                @endif
-                @if (session('error'))
-                <div class="alert alert-danger" role="alert">
-                    {{ session('error') }}
-                </div>
-                @endif
                 <div class="card">
-                    <div class="card-header">{{ __('Uploader ') . Session::get('batches') }}</div>
+                    <div class="card-header">{{ __('Uploader ') }}</div>
                     <ul class="list-group list-group-flush"">
                         <li class=" list-group-item">
                         <x-uploader :action="route('uploadbase')" :input="'upload_base'"

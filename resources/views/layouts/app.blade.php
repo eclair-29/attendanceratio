@@ -98,5 +98,6 @@
 </script>
 <script src="{{ asset('js/result_datatable.js') }}"></script>
 <script src="{{ asset('js/progress.js') }}"></script>
+<script src="{{ asset('js/notification.js') }}"></script>
 
 </html>

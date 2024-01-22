@@ -1,8 +1,9 @@
+<div id="notif_alert"></div>
 <table class="table table-bordered py-3" id="result" width="100%">
     <thead>
         <tr>
             <th scope="col">Staff ID</th>
-            <th scope="col">Staff</th>
+            <!-- <th scope="col">Staff</th> -->
             <th scope="col">Division</th>
             <th scope="col">Dept.</th>
             <th scope="col">Section</th>
