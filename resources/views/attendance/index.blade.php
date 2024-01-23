@@ -21,6 +21,7 @@
                         </li>
 
                         <li class="list-group-item">
+                            <x-controls :seriesList="$seriesList" />
                             <x-result />
                         </li>
                     </ul>

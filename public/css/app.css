@@ -8,7 +8,7 @@ input, span, a, button, p, div, label {
     font-size: 13px !important; 
 }
 
-input {
+input, select, a.btn {
     outline: none !important;
     box-shadow: none !important;
 }
@@ -27,12 +27,27 @@ table thead th {
     border-top: 1px solid #dee2e6 !important;
 }
 
+table tfoot th {
+    border-top: none !important;
+    border-bottom: 1px solid #dee2e6 !important;
+}
+
 table thead th,
-table tbody td {
+table tbody td,
+table tfoot th {
   font-weight: 400 !important;
   border-right: none !important;
   border-color: #dee2e6 !important;
   vertical-align: middle;
+  white-space: nowrap;
+}
+
+table tbody tr td {
+    border-top: 1px solid #dee2e6 !important;
+}
+
+table tbody tr:first-child td {
+    border-top: none !important;
 }
 
 table tbody tr:last-child td {
@@ -40,12 +55,22 @@ table tbody tr:last-child td {
 }
 
 table thead th:last-child,
-table tbody td:last-child {
+table tbody td:last-child,
+table tfoot th:last-child {
   border-right: 1px solid #dee2e6 !important;
 }
 
 .table-responsive::-webkit-scrollbar {
-    width: 0;
+    width: 4.5px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    border: 1px solid #aaaaaa;
+    background-color: #ffffff;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+    background-color: #e7e7e7;
 }
 
 .list-group-item {
@@ -66,6 +91,10 @@ table tbody td:last-child {
     border-color: #ced4da !important;
 }
 
+.controls {
+    padding-bottom: 16px;
+}
+
 #result {
     overflow-x: auto !important;
 }
@@ -80,6 +109,14 @@ table tbody td:last-child {
     border-color: #ced4da;
 }
 
+#export_series_btn,
 #init_notif_btn {
     font-size: 12px !important;
+    border-color: #ced4da;
+    margin-right: 15px;
+}
+
+#series {
+    width: auto;
+    font-size: 12px;
 }

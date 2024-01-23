@@ -6,6 +6,7 @@ use Throwable;
 use App\Models\BuPerDiv;
 use Illuminate\Http\Request;
 use App\Models\ApprovalPerDiv;
+use App\Models\Series;
 
 class MailerController extends Controller
 {
@@ -14,15 +15,25 @@ class MailerController extends Controller
     {
         try {
             $buPerDivs = BuPerDiv::select('div_head', 'division')->get();
+            $seriesDetails = Series::select('series')
+                ->where('id', $request->query('seriesid'))
+                ->first();
+
 
             foreach ($buPerDivs as $buPerDiv) {
+                $ncflRatioPerDiv = getRatioPerDiv($seriesDetails->series, $buPerDiv->division, 'NCFL');
+
+                $npflRatioPerDiv = getRatioPerDiv($seriesDetails->series, $buPerDiv->division, 'NPFL');
+
+                $ncflRatioAverages = json_encode(getRatioAverages($ncflRatioPerDiv));
+                $npflRatioAverages = json_encode(getRatioAverages($npflRatioPerDiv));
+
                 $to = $buPerDiv->div_head;
                 $division = $buPerDiv->division;
                 $notifMsg = $request->notifMsg;
                 $subject = $request->subject;
-                $address = "http://10.216.2.202/HRARMailer/NotifyInitial.php";
-                $series = '2024-1';
-                // $ratioDate = Ratio::take(1)->get;
+                $address = "http://10.216.2.202/hrar_notifier/notify_initial.php";
+                $series = $seriesDetails->series;
 
                 ApprovalPerDiv::upsert([
                     'series_id' => '2024_1_' . str_replace(" ", "_", $buPerDiv->division),
@@ -32,7 +43,16 @@ class MailerController extends Controller
                     'is_expired' => 'no'
                 ], ['series_id'], ['series', 'status', 'reason', 'is_expired']);
 
-                file_get_contents($address . "?to=" . $to . "&notifMsg=" . str_replace(" ", "%20", $notifMsg) . "&subject=" . str_replace(" ", "%20", $subject) . "&division=" . str_replace(" ", "%20", $division) . "&series=" . $series);
+                file_get_contents(
+                    $address
+                        . "?to=" . $to
+                        . "&notifMsg=" . str_replace(" ", "%20", $notifMsg)
+                        . "&subject=" . str_replace(" ", "%20", $subject)
+                        . "&division=" . str_replace(" ", "%20", $division)
+                        . "&series=" . $series
+                        . "&ncflratio=" . urldecode($ncflRatioAverages)
+                        . "&npflratio=" . urldecode($npflRatioAverages)
+                );
             }
 
             return 'Successfully sent initial notification to BU Heads';

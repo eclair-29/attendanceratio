@@ -1,7 +1,8 @@
 <?php
 
-use App\Http\Controllers\AttendanceController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\MailerController;
+use App\Http\Controllers\AttendanceController;
 
 /*
 |--------------------------------------------------------------------------
@@ -15,7 +16,10 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', [AttendanceController::class, 'index']);
+Route::get('/export', [AttendanceController::class, 'export'])->name('export');
 Route::get('/progress', [AttendanceController::class, 'getProgress'])->name('progress');
+Route::get('/series', [AttendanceController::class, 'getSeries'])->name('series');
+Route::get('/ratiobyseries', [AttendanceController::class, 'getRatioBySeries'])->name('ratiobyseries');
 Route::get('/sendinitial', [MailerController::class, 'sendInitialMail'])->name('sendinitial');
 Route::get('/notifapproval', [MailerController::class, 'getNotifApproval'])->name('notifapproval');
 Route::post('/rejection', [MailerController::class, 'postRejectionReason'])->name('rejection');

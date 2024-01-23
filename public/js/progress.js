@@ -19,6 +19,8 @@ function setProgress(response, id) {
 function setFinished(id) {
     id.children(".progress-bar").attr("style", `width: 100%`);
     id.children(".progress-bar").text("100%");
+
+    if (alert("File successfully uploaded")) location.reload();
 }
 
 function setCleared(id, interval) {
@@ -38,6 +40,9 @@ function callAjax(type, interval, id) {
 
             if (response.current_batch_count <= 0) setFinished(id);
             else setProgress(response, id);
+        },
+        error: function (error) {
+            alert("Error uploading file");
         },
     });
 }

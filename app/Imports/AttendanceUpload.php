@@ -7,6 +7,7 @@ use App\Models\Ratio;
 use App\Models\Attendance;
 use Illuminate\Support\Str;
 use App\Models\BatchTracker;
+use App\Models\Series;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Events\AfterBatch;
@@ -25,7 +26,15 @@ use Maatwebsite\Excel\Concerns\WithCalculatedFormulas;
 use Maatwebsite\Excel\Concerns\WithMappedCells;
 use Maatwebsite\Excel\Concerns\WithUpserts;
 
-class AttendanceUpload implements ToModel, WithHeadingRow, WithBatchInserts, WithChunkReading, ShouldQueue, WithEvents, WithCalculatedFormulas, WithUpserts, WithMappedCells
+class AttendanceUpload implements
+    ToModel,
+    WithHeadingRow,
+    WithBatchInserts,
+    WithChunkReading,
+    ShouldQueue,
+    WithEvents,
+    WithCalculatedFormulas,
+    WithUpserts
 {
     use Importable, RegistersEventListeners;
 
@@ -34,13 +43,6 @@ class AttendanceUpload implements ToModel, WithHeadingRow, WithBatchInserts, Wit
     public function __construct(string $fileLabel)
     {
         $this->fileLabel = $fileLabel;
-    }
-
-    public function mapping(): array
-    {
-        if (Str::contains($this->fileLabel, 'PR')) {
-            return ['title' => 'A1'];
-        }
     }
 
     /**
@@ -59,9 +61,9 @@ class AttendanceUpload implements ToModel, WithHeadingRow, WithBatchInserts, Wit
         $attendance = Str::contains($this->fileLabel, 'PR')
             ? new Ratio([
                 'series_id' => '2023_12_' . $row['id_no'],
-                'series' => '2023_12',
+                'series' => $row['series'],
                 'staff_code' => $row['id_no'],
-                'entity' => $row['title'],
+                'entity' => $row['entity'],
                 'division' => $row['division'],
                 'dept' => $row['dept'],
                 'section' => $row['section'],
@@ -242,6 +244,8 @@ class AttendanceUpload implements ToModel, WithHeadingRow, WithBatchInserts, Wit
 
     public function afterImport(AfterImport $event)
     {
+        $recentSeriesRatio = Ratio::orderBy('id', 'desc')->first();
+        Series::updateOrCreate(['series' => $recentSeriesRatio->series], ['series' => $recentSeriesRatio->series]);
         clearQueueTables('attendance');
         // DB::statement("ALTER TABLE batch_trackers AUTO_INCREMENT = 1");
         // DB::table('vw_consolidated_attendance')->truncate();

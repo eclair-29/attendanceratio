@@ -57,6 +57,10 @@ class CalendarsSeeder extends Seeder
             ['day_count' => 26, 'month' => 1, 'year' => 2025, 'shift_type' => 'shifting', 'created_at' => $date, 'updated_at' => $date],
             ['day_count' => 22, 'month' => 2, 'year' => 2025, 'shift_type' => 'shifting', 'created_at' => $date, 'updated_at' => $date],
             ['day_count' => 25, 'month' => 3, 'year' => 2025, 'shift_type' => 'shifting', 'created_at' => $date, 'updated_at' => $date],
+
+            ['day_count' => 23, 'month' => 11, 'year' => 2023, 'shift_type' => 'shifting', 'created_at' => $date, 'updated_at' => $date],
+
+            ['day_count' => 20, 'month' => 11, 'year' => 2023, 'shift_type' => 'compressed', 'created_at' => $date, 'updated_at' => $date],
         ];
 
         foreach ($calendars as $calendar) {

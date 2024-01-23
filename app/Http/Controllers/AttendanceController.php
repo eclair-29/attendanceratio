@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\AttendanceDownload;
 use Throwable;
 use App\Rules\FileNotMatch;
 use Illuminate\Http\Request;
@@ -10,7 +11,10 @@ use Illuminate\Support\Facades\DB;
 use App\Rules\NoStaffBaseDataFound;
 use App\Imports\StaffBaseDetailsUpload;
 use App\Models\BatchTracker;
+use App\Models\Ratio;
+use App\Models\Series;
 use Illuminate\Support\Facades\Session;
+use Maatwebsite\Excel\Facades\Excel;
 
 class AttendanceController extends Controller
 {
@@ -25,6 +29,20 @@ class AttendanceController extends Controller
         return $currentBatch;
     }
 
+    public function getSeries()
+    {
+        $series = Series::all()->orderBy('id', 'desc');
+        return $series;
+    }
+
+    public function getRatioBySeries(Request $request)
+    {
+        $series = Series::where('id', $request->query('series_id'))->first();
+        $ratioBySeries['data'] = Ratio::where('series', $series->series)->get();
+
+        return $ratioBySeries;
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -32,7 +50,14 @@ class AttendanceController extends Controller
      */
     public function index()
     {
-        return view('attendance.index');
+        $seriesList = Series::all();
+        return view('attendance.index', ['seriesList' => $seriesList]);
+    }
+
+    public function export(Request $request)
+    {
+        $ratioBySeries = $this->getRatioBySeries($request);
+        return Excel::download(new AttendanceDownload($ratioBySeries), $request->query('series_id') . '_ratio.xlsx');
     }
 
     public function uploadBase(Request $request)
