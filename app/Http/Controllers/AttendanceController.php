@@ -38,7 +38,28 @@ class AttendanceController extends Controller
     public function getRatioBySeries(Request $request)
     {
         $series = Series::where('id', $request->query('series_id'))->first();
-        $ratioBySeries['data'] = Ratio::where('series', $series->series)->get();
+        $ratioBySeries['data'] =
+            Ratio::select(
+                'staff_code',
+                'division',
+                'dept',
+                'section',
+                'entity',
+                'attendance_ratio',
+                'absent_ratio',
+                'total_sl',
+                'total_vl',
+                'total_lwop',
+                'total_late',
+                'total_early_exit',
+                'sl_percentage',
+                'vl_percentage',
+                'lwop_percentage',
+                'late_percentage',
+                'early_exit_percentage'
+            )
+            ->where('series', $series->series)
+            ->get();
 
         return $ratioBySeries;
     }
@@ -56,8 +77,9 @@ class AttendanceController extends Controller
 
     public function export(Request $request)
     {
+        $seriesDetails = Series::where('id', $request->query('series_id'))->first();
         $ratioBySeries = $this->getRatioBySeries($request);
-        return Excel::download(new AttendanceDownload($ratioBySeries), $request->query('series_id') . '_ratio.xlsx');
+        return Excel::download(new AttendanceDownload($ratioBySeries), $seriesDetails->series . '_ratio.xlsx');
     }
 
     public function uploadBase(Request $request)

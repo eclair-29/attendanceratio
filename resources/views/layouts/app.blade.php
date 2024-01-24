@@ -48,6 +48,7 @@
                     </ul>
 
                     <!-- Right Side Of Navbar -->
+                    @if (!Route::is('notifapproval'))
                     <ul class="navbar-nav ms-auto">
                         <!-- Authentication Links -->
                         @guest
@@ -63,6 +64,9 @@
                         </li>
                         @endif
                         @else
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('register') }}">{{ __('Approval Status') }}</a>
+                        </li>
                         <li class="nav-item dropdown">
                             <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button"
                                 data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
@@ -82,6 +86,7 @@
                         </li>
                         @endguest
                     </ul>
+                    @endif
                 </div>
             </div>
         </nav>
@@ -90,7 +95,6 @@
             @yield('content')
         </main>
     </div>
-    <x-toast />
 </body>
 <script type="text/javascript">
     const baseUrl = '{{ url('') }}';

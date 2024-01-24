@@ -3,9 +3,10 @@
 namespace App\Exports;
 
 use Maatwebsite\Excel\Concerns\FromArray;
-use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithStrictNullComparison;
 
-class AttendanceDownload implements FromArray
+class AttendanceDownload implements FromArray, WithHeadings, WithStrictNullComparison
 {
     public $ratio;
 
@@ -20,5 +21,28 @@ class AttendanceDownload implements FromArray
     public function array(): array
     {
         return $this->ratio;
+    }
+
+    public function headings(): array
+    {
+        return [
+            "EMPLOYEE ID",
+            "DIVISION",
+            "DEPARTMENT",
+            "SECTION",
+            "ENTITY",
+            "RATIO",
+            "ABSENT RATIO",
+            "SL",
+            "VL",
+            "UA",
+            "LATE",
+            "UT",
+            "SL%",
+            "VL%",
+            "UA%",
+            "LATE%",
+            "UT%",
+        ];
     }
 }

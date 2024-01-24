@@ -19,8 +19,8 @@ return new class extends Migration
             $table->string('status');
             $table->string('shift_type');
             $table->string('dept');
-            $table->string('section');
-            $table->string('division');
+            $table->string('section')->nullable();
+            $table->string('division')->nullable();
             $table->timestamps();
         });
     }

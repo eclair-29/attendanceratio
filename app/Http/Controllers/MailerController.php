@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\ProcessFollowup;
 use Throwable;
 use App\Models\BuPerDiv;
 use Illuminate\Http\Request;
@@ -13,71 +14,44 @@ class MailerController extends Controller
 
     public function sendInitialMail(Request $request)
     {
-        try {
-            $buPerDivs = BuPerDiv::select('div_head', 'division')->get();
-            $seriesDetails = Series::select('series')
-                ->where('id', $request->query('seriesid'))
-                ->first();
+        $divsNeedsApprovals = ApprovalPerDiv::where('status', 'pending')
+            ->orWhere(function ($query) {
+                $query->where('status', 'rejected')
+                    ->where('reason', '');
+            })
+            ->where('is_expired', 'no')
+            ->get();
 
+        ProcessFollowup::dispatch($divsNeedsApprovals)
+            ->delay(now()->addMinutes(1));
 
-            foreach ($buPerDivs as $buPerDiv) {
-                $ncflRatioPerDiv = getRatioPerDiv($seriesDetails->series, $buPerDiv->division, 'NCFL');
-
-                $npflRatioPerDiv = getRatioPerDiv($seriesDetails->series, $buPerDiv->division, 'NPFL');
-
-                $ncflRatioAverages = json_encode(getRatioAverages($ncflRatioPerDiv));
-                $npflRatioAverages = json_encode(getRatioAverages($npflRatioPerDiv));
-
-                $to = $buPerDiv->div_head;
-                $division = $buPerDiv->division;
-                $notifMsg = $request->notifMsg;
-                $subject = $request->subject;
-                $address = "http://10.216.2.202/hrar_notifier/notify_initial.php";
-                $series = $seriesDetails->series;
-
-                ApprovalPerDiv::upsert([
-                    'series_id' => '2024_1_' . str_replace(" ", "_", $buPerDiv->division),
-                    'division' => $buPerDiv->division,
-                    'status' => 'pending',
-                    'series' => $series,
-                    'is_expired' => 'no'
-                ], ['series_id'], ['series', 'status', 'reason', 'is_expired']);
-
-                file_get_contents(
-                    $address
-                        . "?to=" . $to
-                        . "&notifMsg=" . str_replace(" ", "%20", $notifMsg)
-                        . "&subject=" . str_replace(" ", "%20", $subject)
-                        . "&division=" . str_replace(" ", "%20", $division)
-                        . "&series=" . $series
-                        . "&ncflratio=" . urldecode($ncflRatioAverages)
-                        . "&npflratio=" . urldecode($npflRatioAverages)
-                );
-            }
-
-            return 'Successfully sent initial notification to BU Heads';
-        } catch (Throwable $th) {
-            throw $th;
-            return 'Failed to send initial notification';
-        }
+        return notifyInitial($request->query('division'), $request->query('seriesid'), $request->notifMsg, $request->subject);
     }
 
     public function getNotifApproval(Request $request)
     {
         $approval = ApprovalPerDiv::where('division', $request->query('division'))
-            ->where('series', $request->query('series'))
+            ->where('series_id', $request->query('series'))
             // ->where('is_expired', 'no')
             ->first();
 
+
         if ($approval->is_expired == 'no') $approval->update(['status' => $request->query('status')]);
+
+        notifyHr($request->query('division'), $request->query('status'), $approval->series, '');
 
         return view('attendance.approval', ['approval' => $approval]);
     }
 
-    public function postRejectionReason(Request $request)
+    public function postRejectionReason(Request $request, $id)
     {
+        $approvalDetails = ApprovalPerDiv::where('id', $id)->first();
 
-        return redirect('/');
+        $approvalDetails->update(['reason' => $request->reason]);
+
+        notifyHr($approvalDetails->division, $approvalDetails->status, $approvalDetails->series, $request->reason);
+
+        return redirect()->back()->with('status', 'Successfuly posted your rejection reason');;
     }
 
     /**

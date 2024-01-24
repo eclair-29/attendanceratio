@@ -60,6 +60,10 @@ table tfoot th:last-child {
   border-right: 1px solid #dee2e6 !important;
 }
 
+tfoot th {
+    padding: 10px !important;
+}
+
 .table-responsive::-webkit-scrollbar {
     width: 4.5px;
 }
@@ -95,6 +99,11 @@ table tfoot th:last-child {
     padding-bottom: 16px;
 }
 
+.result-filter {
+    width: auto;
+    font-size: 12px;
+}
+
 #result {
     overflow-x: auto !important;
 }
@@ -109,6 +118,10 @@ table tfoot th:last-child {
     border-color: #ced4da;
 }
 
+#rejection_reason_btn {
+    border-color: #ced4da !important;
+}
+
 #export_series_btn,
 #init_notif_btn {
     font-size: 12px !important;
@@ -120,3 +133,4 @@ table tfoot th:last-child {
     width: auto;
     font-size: 12px;
 }
+

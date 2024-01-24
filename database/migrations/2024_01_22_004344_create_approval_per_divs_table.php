@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('series_id')->unique();
             $table->string('division');
             $table->string('status');
-            $table->string('is_expired');
+            $table->string('is_expired')->nullable();
             $table->string('series');
             $table->string('reason')->nullable();
             $table->timestamps();

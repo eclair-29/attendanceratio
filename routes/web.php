@@ -22,7 +22,7 @@ Route::get('/series', [AttendanceController::class, 'getSeries'])->name('series'
 Route::get('/ratiobyseries', [AttendanceController::class, 'getRatioBySeries'])->name('ratiobyseries');
 Route::get('/sendinitial', [MailerController::class, 'sendInitialMail'])->name('sendinitial');
 Route::get('/notifapproval', [MailerController::class, 'getNotifApproval'])->name('notifapproval');
-Route::post('/rejection', [MailerController::class, 'postRejectionReason'])->name('rejection');
+Route::put('/rejection/{id}', [MailerController::class, 'postRejectionReason'])->name('rejection');
 Route::post('/uploadbase', [AttendanceController::class, 'uploadBase'])->name('uploadbase');
 Route::post('/upload', [AttendanceController::class, 'upload'])->name('upload');
 
