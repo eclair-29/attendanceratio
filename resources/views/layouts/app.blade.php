@@ -18,12 +18,14 @@
     <!-- Styles -->
     <link rel="stylesheet" href="{{ asset('css/libs/datatables.css') }}">
     <link rel="stylesheet" href="{{ asset('css/libs/bootstrap.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/libs/toastify.css') }}">
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
 
     <!-- Scripts -->
     <script src="{{ asset('js/libs/jquery.js') }}"></script>
     <script src="{{ asset('js/libs/datatables.js') }}"></script>
     <script src="{{ asset('js/libs/bootstrap.js') }}"></script>
+    <script src="{{ asset('js/libs/toastify.js') }}"></script>
     <script src="{{ asset('js/libs/feather.js') }}"></script>
 </head>
 

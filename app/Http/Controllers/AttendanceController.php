@@ -64,6 +64,12 @@ class AttendanceController extends Controller
         return $ratioBySeries;
     }
 
+    public function clearBatchingTables(Request $request)
+    {
+        clearQueueTables($request->query('type'));
+        return 'success';
+    }
+
     /**
      * Display a listing of the resource.
      *

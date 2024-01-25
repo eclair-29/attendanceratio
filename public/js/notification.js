@@ -27,11 +27,11 @@ notifBtn.on("click", function () {
         )}&notifMsg=${toQueryString(notifMsg)}&seriesid=${series}`,
         type: "GET",
         success: function (data) {
-            setNotifBtnBehavior("Send Initial Notif", false);
+            setNotifBtnBehavior("Send Initial Mail", false);
             alert(data);
         },
         error: function (error) {
-            setNotifBtnBehavior("Send Initial Notif", false);
+            setNotifBtnBehavior("Send Initial Mail", false);
             alert("Error sending notification");
         },
     });

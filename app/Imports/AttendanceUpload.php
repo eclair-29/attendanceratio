@@ -246,13 +246,13 @@ class AttendanceUpload implements
     {
         $recentSeriesRatio = Ratio::orderBy('id', 'desc')->first();
         Series::updateOrCreate(['series' => $recentSeriesRatio->series], ['series' => $recentSeriesRatio->series]);
-        clearQueueTables('attendance');
+        // clearQueueTables('attendance');
         // DB::statement("ALTER TABLE batch_trackers AUTO_INCREMENT = 1");
         // DB::table('vw_consolidated_attendance')->truncate();
     }
 
-    public function importFailed(ImportFailed $event)
-    {
-        dd($event->getException()->getMessage());
-    }
+    // public function importFailed(ImportFailed $event)
+    // {
+    //     dd($event->getException()->getMessage());
+    // }
 }

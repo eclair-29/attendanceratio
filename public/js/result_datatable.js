@@ -24,6 +24,8 @@ function tableDrawCallback(settings) {
         .every(function (d) {
             let col = this;
 
+            let cell = $("#filters th").eq($(col.column(d).header()).index());
+
             // Create select element
             const theadLabel = $("#result th").eq([d]).text();
 
@@ -31,12 +33,13 @@ function tableDrawCallback(settings) {
                 "<select class='form-select result-filter'></select>"
             );
             select.append(new Option(theadLabel));
-            $(col.footer()).empty().append(select);
+            // $(col.footer()).empty().append(select);
+            $(cell).html(select);
 
             // Apply listener for user change in value
             select.on("change", function () {
                 const val = $.fn.dataTable.util.escapeRegex(select.val());
-                col.search(val && "^" + val + "$", true, false).draw();
+                col.search(val && "^" + val + "$", true, "").draw();
                 // $(`#${selectId} option[value="${val}"]`).attr("selected", true);
             });
 
@@ -68,6 +71,7 @@ let result = new DataTable("#result", {
     pageLength: 25,
     columns: cols,
     drawCallback: tableDrawCallback,
+    orderCellsTop: true,
 });
 
 const entries = $("#result_length");
@@ -77,6 +81,7 @@ const search = $("#result_filter");
 const tableTopRightControls =
     "<div class='table-top-right-controls d-flex align-items-center'></div>";
 const seriesSelect = $("#series");
+const clearFilterBtn = $("#clear_filter_btn");
 const exportBtn = $("#export_series_btn");
 const initNotifBtn = $("#init_notif_btn");
 
@@ -97,6 +102,7 @@ function getRatioBySeries(id) {
                 "href",
                 `${baseUrl}/export?series_id=${seriesSelect.val()}`
             );
+            clearFilterBtn.attr("disabled", false);
             initNotifBtn.attr("disabled", false);
         },
         error: function (error) {
@@ -107,4 +113,9 @@ function getRatioBySeries(id) {
 
 seriesSelect.on("change", function () {
     getRatioBySeries($(this).val());
+});
+
+clearFilterBtn.on("click", function () {
+    result.search("");
+    result.columns().search("").draw();
 });

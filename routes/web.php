@@ -19,6 +19,7 @@ Route::get('/', [AttendanceController::class, 'index']);
 Route::get('/export', [AttendanceController::class, 'export'])->name('export');
 Route::get('/progress', [AttendanceController::class, 'getProgress'])->name('progress');
 Route::get('/series', [AttendanceController::class, 'getSeries'])->name('series');
+Route::get('/clearbatchtables', [AttendanceController::class, 'clearBatchingTables'])->name('clearbatchtables');
 Route::get('/ratiobyseries', [AttendanceController::class, 'getRatioBySeries'])->name('ratiobyseries');
 Route::get('/sendinitial', [MailerController::class, 'sendInitialMail'])->name('sendinitial');
 Route::get('/notifapproval', [MailerController::class, 'getNotifApproval'])->name('notifapproval');

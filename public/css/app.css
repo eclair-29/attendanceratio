@@ -25,6 +25,8 @@ table {
 
 table thead th {
     border-top: 1px solid #dee2e6 !important;
+    background-color: white !important;
+    overflow: hidden;
 }
 
 table tfoot th {
@@ -61,7 +63,7 @@ table tfoot th:last-child {
 }
 
 tfoot th {
-    padding: 10px !important;
+    padding: 8px !important;
 }
 
 .table-responsive::-webkit-scrollbar {
@@ -101,7 +103,7 @@ tfoot th {
 
 .result-filter {
     width: auto;
-    font-size: 12px;
+    font-size: 11px;
 }
 
 #result {
@@ -113,6 +115,10 @@ tfoot th {
     float: none !important;
 }
 
+#filters th {
+    border-top: none !important;
+}
+
 #base_upload_btn,
 #upload_btn {
     border-color: #ced4da;
@@ -122,6 +128,7 @@ tfoot th {
     border-color: #ced4da !important;
 }
 
+#clear_filter_btn,
 #export_series_btn,
 #init_notif_btn {
     font-size: 12px !important;

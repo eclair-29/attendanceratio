@@ -78,6 +78,6 @@ class StaffBaseDetailsUpload implements ToModel, WithHeadingRow, WithBatchInsert
 
     public function afterImport(AfterImport $event)
     {
-        clearQueueTables('base');
+        // clearQueueTables('base');
     }
 }
