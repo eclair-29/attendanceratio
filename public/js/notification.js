@@ -22,7 +22,7 @@ notifBtn.on("click", function () {
     setNotifBtnBehavior("Sending...", true);
 
     $.ajax({
-        url: `${baseUrl}/sendinitial?subject=${toQueryString(
+        url: `${baseUrl}/sendnotification?subject=${toQueryString(
             subject
         )}&notifMsg=${toQueryString(notifMsg)}&seriesid=${series}`,
         type: "GET",

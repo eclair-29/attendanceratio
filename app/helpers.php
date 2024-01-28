@@ -5,7 +5,9 @@ use App\Models\Series;
 use App\Models\BuPerDiv;
 use App\Models\Attendance;
 use App\Models\BatchTracker;
+use App\Models\UploadedFile;
 use App\Models\ApprovalPerDiv;
+use Illuminate\Support\Facades\DB;
 
 function clearQueueTables($batchType)
 {
@@ -41,7 +43,9 @@ function getRatioAverages($ratioPerDiv, $entity)
 function notifyInitial($division, $seriesId, $notifMsg, $subject)
 {
     try {
-        $buPerDivs = BuPerDiv::select('div_head', 'division')->get();
+        $buPerDivs = BuPerDiv::select('div_head', 'division')
+            ->orderBy('div_head', 'asc')
+            ->get();
         $seriesDetails = Series::select('series')
             ->where('id', $seriesId)
             ->first();
@@ -88,7 +92,7 @@ function notifyInitial($division, $seriesId, $notifMsg, $subject)
                     . "&notifMsg=" . str_replace(" ", "%20", $notifMsg)
                     . "&subject=" . str_replace(" ", "%20", $subject)
                     . "&division=" . str_replace(" ", "%20", $division)
-                    . "&series_id=" . $seriesId . "&"
+                    . "&series_id=" . $approvalSeriesId . "&"
                     .  implode("&", $ncflJsonQueryString)
                     . "&" .  implode("&", $npflJsonQueryString)
             );
@@ -112,4 +116,47 @@ function notifyHr($division, $status, $series, $reason)
             . "&series=" . $series
             . "&reason=" . str_replace(" ", "%20", $reason) ?? ''
     );
+}
+
+function getOverallPerDiv($series, $entity)
+{
+    return DB::select(
+        "SELECT 
+                division,
+                entity,
+                series,
+                avg(attendance_ratio) as ratio,
+                avg(absent_ratio) as absent_ratio,
+                avg(sl_percentage) as sl_percentage,
+                avg(vl_percentage) as vl_percentage,
+                avg(lwop_percentage) as lwop_percentage,
+                avg(late_percentage) as late_percentage,
+                avg(early_exit_percentage) as early_exit_percentage
+            FROM hrardb.ratios
+            WHERE series = ? AND entity = ?
+            GROUP BY division, entity, series",
+        [$series, $entity]
+    );
+}
+
+function getFileDetails($input, $type)
+{
+    return [
+        'fileLabel' => $input->getClientOriginalName(),
+        'fileSize' => $input->getSize(),
+        'filePath' => $input->getPath(),
+        'fileType' => $type
+    ];
+}
+
+function saveUploadedFile($fileLabel, $fileSize, $filePath, $fileType)
+{
+    UploadedFile::updateOrCreate([
+        'file' => $fileLabel
+    ], [
+        // 'file' => $fileLabel,
+        'size' => $fileSize,
+        'path' => $filePath,
+        'type' => $fileType,
+    ]);
 }

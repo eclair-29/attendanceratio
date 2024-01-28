@@ -14,17 +14,11 @@ function setFinished(id, percentage = 100) {
     id.children(".progress-bar").text(`${percentage}%`);
 }
 
-function setCleared(id, interval, type) {
-    Toastify({
-        text: "File successfully uploaded",
-        duration: 5000,
-    }).showToast();
-
-    setTimeout(() => {
-        id.attr("hidden", true);
-    }, 2000);
-
+function setCleared(interval) {
     clearInterval(interval);
+}
+
+function clearBatchTables(type) {
     $.ajax({
         url: `${baseUrl}/clearbatchtables?type=${type}`,
         type: "GET",
@@ -40,18 +34,14 @@ function setCleared(id, interval, type) {
 const currentPath = window.location.pathname;
 
 function callAjax(type, interval, id) {
-    if (!currentPath.includes("login")) {
+    const isAuthRoutes =
+        currentPath.includes("login") || currentPath.includes("register");
+
+    if (!isAuthRoutes) {
         $.ajax({
             type: "GET",
             url: `${baseUrl}/progress?type=${type}`,
             success: function (response) {
-                // if (!response) {
-                //     setCleared(id, interval);
-                //     return;
-                // }
-                // if (response.current_batch_count <= 0) setFinished(id);
-                // else setProgress(response, id);
-
                 if (response) {
                     let totalJobs = parseInt(response.total_batch_count);
                     let pendingJobs = parseInt(response.current_batch_count);
@@ -60,23 +50,34 @@ function callAjax(type, interval, id) {
 
                     if (pendingJobs === 0) {
                         percentage = 100;
-
                         setFinished(id, percentage);
                     } else {
                         percentage = parseInt(
                             (finishedJobs / totalJobs) * 100
                         ).toFixed(0);
+                        pendingJobs < 0
+                            ? (percentage = 100)
+                            : (percentage = percentage);
                         setProgress(id, percentage);
                     }
 
                     if (parseInt(percentage) >= 100) {
                         percentage = 0;
-                        setCleared(id, interval, type);
+                        setTimeout(() => {
+                            id.attr("hidden", true);
+                            if (!alert("File successfully uploaded"))
+                                location.reload();
+                        }, 1000);
+
+                        setCleared(interval);
+                        clearBatchTables(type);
                     }
+                } else {
+                    setCleared(interval);
                 }
             },
             error: function (error) {
-                alert("Error uploading file");
+                alert("Error uploading file. Pleae contact ISD for support.");
             },
         });
         return;

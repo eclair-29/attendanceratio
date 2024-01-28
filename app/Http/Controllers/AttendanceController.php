@@ -2,19 +2,23 @@
 
 namespace App\Http\Controllers;
 
-use App\Exports\AttendanceDownload;
 use Throwable;
-use App\Rules\FileNotMatch;
-use Illuminate\Http\Request;
-use App\Imports\AttendanceUpload;
-use Illuminate\Support\Facades\DB;
-use App\Rules\NoStaffBaseDataFound;
-use App\Imports\StaffBaseDetailsUpload;
-use App\Models\BatchTracker;
+use Carbon\Carbon;
 use App\Models\Ratio;
 use App\Models\Series;
-use Illuminate\Support\Facades\Session;
+use App\Rules\FileNotMatch;
+use Illuminate\Support\Str;
+use App\Models\BatchTracker;
+use App\Models\UploadedFile;
+use Illuminate\Http\Request;
+use App\Models\ApprovalPerDiv;
+use App\Imports\AttendanceUpload;
+use Illuminate\Support\Facades\DB;
+use App\Exports\AttendanceDownload;
+use App\Rules\NoStaffBaseDataFound;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Imports\StaffBaseDetailsUpload;
+use Illuminate\Support\Facades\Session;
 
 class AttendanceController extends Controller
 {
@@ -70,6 +74,14 @@ class AttendanceController extends Controller
         return 'success';
     }
 
+    public function downloadFile(Request $request)
+    {
+        $file = $request->query('file');
+        $type = $request->query('type') == 'attendance' ? 'raw' : 'base';
+        $path = storage_path('app/files/' . $type . '/' . $file);
+        return response()->download($path);
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -78,7 +90,25 @@ class AttendanceController extends Controller
     public function index()
     {
         $seriesList = Series::all();
-        return view('attendance.index', ['seriesList' => $seriesList]);
+        $currentUploadedBaseFile = UploadedFile::where('type', 'base_data')
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        $recentUploadedAttendanceFile = UploadedFile::where('type', 'like', '%attendance%')
+            ->whereDate('updated_at', Carbon::today())
+            ->orderBy('updated_at', 'desc')
+            ->get();
+
+        $uploadedFileHistory = UploadedFile::where('type', 'like', '%attendance%')
+            ->orderBy('updated_at', 'desc')
+            ->get();
+
+        return view('attendance.index', [
+            'seriesList' => $seriesList,
+            'recentUploadedAttendanceFile' => $recentUploadedAttendanceFile,
+            'uploadedFileHistory' => $uploadedFileHistory,
+            'currentUploadedBaseFile' => $currentUploadedBaseFile
+        ]);
     }
 
     public function export(Request $request)
@@ -94,10 +124,15 @@ class AttendanceController extends Controller
             'upload_base' => 'required',
         ]);
 
+        $fileLabel = $request->file('upload_base')->getClientOriginalName();
+        $requestedFile = $request->file('upload_base');
+        $fileType = 'base_data';
+        $fileDetails = getFileDetails($requestedFile, $fileType);
+
         DB::beginTransaction();
         try {
-            // Excel::import(new AttendanceUpload, $request->file('upload')->store('files'));
-            (new StaffBaseDetailsUpload)->queue($request->file('upload_base')->store('files/base'));
+            (new StaffBaseDetailsUpload($fileDetails))
+                ->queue($request->file('upload_base')->storeAs('files/base', $fileLabel));
 
             DB::commit();
         } catch (Throwable $th) {
@@ -114,13 +149,16 @@ class AttendanceController extends Controller
             'upload' => ['required', new FileNotMatch, new NoStaffBaseDataFound],
         ]);
 
+        $requestedFile = $request->file('upload');
         $fileLabel = $request->file('upload')->getClientOriginalName();
-        $notificationMsg = null;
+        $fileType = Str::contains($fileLabel, 'PR') ? 'agency_attendance' : 'allsec_attendance';
+        $fileDetails = getFileDetails($requestedFile, $fileType);
 
         DB::beginTransaction();
         try {
-            (new AttendanceUpload($fileLabel, $notificationMsg))->queue($request->file('upload')->store('files/raw'));
-            Session::put('success', $notificationMsg);
+            (new AttendanceUpload($fileLabel, $fileDetails))
+                ->queue($request->file('upload')->storeAs('files/raw', $fileLabel));
+
             DB::commit();
         } catch (Throwable $th) {
             DB::rollBack();

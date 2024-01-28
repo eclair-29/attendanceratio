@@ -18,13 +18,13 @@ class BuPerDivsSeeder extends Seeder
     {
         $date = Carbon::now();
         $buPerDivs = [
-            ['div_head' => 'miguel.dechavez@nidec.com', 'division' => 'PRODUCTION DEVELOPMENT CENTER', 'created_at' => $date, 'updated_at' => $date],
-            ['div_head' => 'miguel.dechavez@nidec.com', 'division' => 'ACCOUNTING AND FINANCE', 'created_at' => $date, 'updated_at' => $date],
-            ['div_head' => 'miguel.dechavez@nidec.com', 'division' => 'ADMINISTRATION', 'created_at' => $date, 'updated_at' => $date],
-            ['div_head' => 'miguel.dechavez@nidec.com', 'division' => 'BCO', 'created_at' => $date, 'updated_at' => $date],
-            ['div_head' => 'miguel.dechavez@nidec.com', 'division' => 'CENTRAL PROCUREMENT', 'created_at' => $date, 'updated_at' => $date],
-            ['div_head' => 'miguel.dechavez@nidec.com', 'division' => 'FACILITIES PLANNING AND OPERATION', 'created_at' => $date, 'updated_at' => $date],
-            ['div_head' => 'miguel.dechavez@nidec.com', 'division' => 'OFFICE OF THE PRESIDENT', 'created_at' => $date, 'updated_at' => $date],
+            ['div_head' => 'sarahlly.torino@nidec.com', 'division' => 'PRODUCTION DEVELOPMENT CENTER', 'created_at' => $date, 'updated_at' => $date],
+            ['div_head' => 'sarahlly.torino@nidec.com', 'division' => 'ACCOUNTING AND FINANCE', 'created_at' => $date, 'updated_at' => $date],
+            ['div_head' => 'jhess.ortega@nidec.com', 'division' => 'ADMINISTRATION', 'created_at' => $date, 'updated_at' => $date],
+            ['div_head' => 'jhess.ortega@nidec.com', 'division' => 'BCO', 'created_at' => $date, 'updated_at' => $date],
+            ['div_head' => 'jhess.ortega@nidec.com', 'division' => 'CENTRAL PROCUREMENT', 'created_at' => $date, 'updated_at' => $date],
+            ['div_head' => 'sarahlly.torino@nidec.com', 'division' => 'FACILITIES PLANNING AND OPERATION', 'created_at' => $date, 'updated_at' => $date],
+            ['div_head' => 'sarahlly.torino@nidec.com', 'division' => 'OFFICE OF THE PRESIDENT', 'created_at' => $date, 'updated_at' => $date],
             ['div_head' => 'miguel.dechavez@nidec.com', 'division' => 'PARTS', 'created_at' => $date, 'updated_at' => $date],
             ['div_head' => 'miguel.dechavez@nidec.com', 'division' => 'PRODUCTION', 'created_at' => $date, 'updated_at' => $date],
             ['div_head' => 'miguel.dechavez@nidec.com', 'division' => 'PRODUCTION PLANNING', 'created_at' => $date, 'updated_at' => $date],

@@ -17,9 +17,23 @@ use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\RegistersEventListeners;
 
-class StaffBaseDetailsUpload implements ToModel, WithHeadingRow, WithBatchInserts, WithChunkReading, ShouldQueue, WithEvents, WithUpserts
+class StaffBaseDetailsUpload implements
+    ToModel,
+    WithHeadingRow,
+    WithBatchInserts,
+    WithChunkReading,
+    ShouldQueue,
+    WithEvents,
+    WithUpserts
 {
     use Importable, RegistersEventListeners;
+
+    public $fileDetails;
+
+    public function __construct($fileDetails)
+    {
+        $this->fileDetails = $fileDetails;
+    }
 
     public function uniqueBy()
     {
@@ -34,12 +48,12 @@ class StaffBaseDetailsUpload implements ToModel, WithHeadingRow, WithBatchInsert
     public function model(array $row)
     {
         return new StaffBaseDetail([
-            'staff_code' => $row['employee_code'],
-            'status' => $row['employee_status'],
-            'shift_type' => $row['shift_type'],
-            'dept' => $row['department'],
-            'section' => $row['section'],
-            'division' => $row['division'],
+            'staff_code' => $row['EMPLOYEE CODE'] ?? $row['Employee Code'],
+            'status' => $row['EMPLOYEE STATUS'] ?? $row['Employee Status'],
+            'shift_type' => $row['SHIFT TYPE'] ?? $row['Shift Type'],
+            'dept' => $row['DEPARTMENT'] ?? $row['Department'],
+            'section' => $row['SECTION'] ?? $row['Section'],
+            'division' => $row['DIVISION'] ?? $row['Division'],
         ]);
     }
 
@@ -79,5 +93,11 @@ class StaffBaseDetailsUpload implements ToModel, WithHeadingRow, WithBatchInsert
     public function afterImport(AfterImport $event)
     {
         // clearQueueTables('base');
+        saveUploadedFile(
+            $this->fileDetails['fileLabel'],
+            $this->fileDetails['fileSize'],
+            $this->fileDetails['filePath'],
+            $this->fileDetails['fileType']
+        );
     }
 }

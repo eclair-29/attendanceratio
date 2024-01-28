@@ -103,6 +103,7 @@
     feather.replace();
 </script>
 <script src="{{ asset('js/result_datatable.js') }}"></script>
+<script src="{{ asset('js/filehistory.js') }}"></script>
 <script src="{{ asset('js/progress.js') }}"></script>
 <script src="{{ asset('js/notification.js') }}"></script>
 <script src="{{ asset('js/export.js') }}"></script>

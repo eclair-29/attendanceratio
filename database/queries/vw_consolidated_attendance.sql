@@ -263,7 +263,7 @@ FROM hrardb.attendances a
 LEFT JOIN hrardb.staff_base_details sbd
 	ON a.staff_code = sbd.staff_code
 -- where a.staff_code = '0100998'
-where sbd.staff_code not in ('999998', '999999') -- R,Guest2, Guest
+where sbd.staff_code not in ('999998') -- R,Guest2
 group by a.staff_code, a.entity;
 
 --

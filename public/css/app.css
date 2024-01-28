@@ -4,6 +4,17 @@
     font-family: 'Poppins', sans-serif !important;
 }
 
+/* body {
+    background-image: url('../NCFLBldgBlacked.png');
+    background-repeat: no-repeat;
+    background-size: cover;
+} */
+
+.navbar {
+    background-color: #139f4a !important;
+}
+
+
 input, span, a, button, p, div, label {
     font-size: 13px !important; 
 }
@@ -106,6 +117,22 @@ tfoot th {
     font-size: 11px;
 }
 
+.uploaded-files * {
+    font-size: 12px !important;
+    text-decoration: none;
+    list-style-type: none;
+}
+
+.uploaded-files a {
+    border-bottom: 1px dotted #198754;
+    cursor: pointer;
+}
+
+.modal-title {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+}
+
 #result {
     overflow-x: auto !important;
 }
@@ -115,8 +142,18 @@ tfoot th {
     float: none !important;
 }
 
+#uploaded_files_history_table a {
+    border-bottom: 1px dotted #198754;
+    cursor: pointer;
+    text-decoration: none;
+}
+
 #filters th {
     border-top: none !important;
+}
+
+#filters th:last-child {
+    border-right: none !important;
 }
 
 #base_upload_btn,
@@ -140,4 +177,3 @@ tfoot th {
     width: auto;
     font-size: 12px;
 }
-

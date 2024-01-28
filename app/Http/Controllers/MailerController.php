@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\ProcessFinalRelease;
 use App\Jobs\ProcessFollowup;
 use Throwable;
 use App\Models\BuPerDiv;
@@ -11,19 +12,29 @@ use App\Models\Series;
 
 class MailerController extends Controller
 {
-
-    public function sendInitialMail(Request $request)
+    public function sendMailNotif(Request $request)
     {
-        $divsNeedsApprovals = ApprovalPerDiv::where('status', 'pending')
+        $seriesDetails = Series::where("id", $request->query('seriesid'))
+            ->first();
+
+        $divsNeedsApprovals = ApprovalPerDiv::where('series', $seriesDetails->series)
+            ->where('status', 'pending')
             ->orWhere(function ($query) {
                 $query->where('status', 'rejected')
                     ->where('reason', '');
             })
             ->where('is_expired', 'no')
+            ->orderBy('division', 'asc')
             ->get();
+
+        $overallNcfl = getOverallPerDiv($seriesDetails->series, 'NCFL');
+        $overallNpfl = getOverallPerDiv($seriesDetails->series, 'NPFL');
 
         ProcessFollowup::dispatch($divsNeedsApprovals)
             ->delay(now()->addMinutes(1));
+
+        ProcessFinalRelease::dispatch($overallNcfl, $overallNpfl, $seriesDetails->series)
+            ->delay(now()->addMinutes(2));
 
         return notifyInitial($request->query('division'), $request->query('seriesid'), $request->notifMsg, $request->subject);
     }
@@ -35,7 +46,6 @@ class MailerController extends Controller
             // ->where('is_expired', 'no')
             ->first();
 
-
         if ($approval->is_expired == 'no') $approval->update(['status' => $request->query('status')]);
 
         notifyHr($request->query('division'), $request->query('status'), $approval->series, '');
@@ -45,6 +55,10 @@ class MailerController extends Controller
 
     public function postRejectionReason(Request $request, $id)
     {
+        $request->validate([
+            'reason' => 'required',
+        ]);
+
         $approvalDetails = ApprovalPerDiv::where('id', $id)->first();
 
         $approvalDetails->update(['reason' => $request->reason]);

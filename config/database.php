@@ -63,6 +63,15 @@ return [
             ]) : [],
         ],
 
+        'hris' => [
+            'driver' => 'mysql',
+            'host' => env('HRIS_DB_HOST', '127.0.0.1'),
+            'port' => env('HRIS_DB_PORT', '3306'),
+            'database' => env('HRIS_DB_DATABASE', 'forge'),
+            'username' => env('HRIS_DB_USERNAME', 'forge'),
+            'password' => env('HRIS_DB_PASSWORD', ''),
+        ],
+
         'pgsql' => [
             'driver' => 'pgsql',
             'url' => env('DATABASE_URL'),
@@ -123,7 +132,7 @@ return [
 
         'options' => [
             'cluster' => env('REDIS_CLUSTER', 'redis'),
-            'prefix' => env('REDIS_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_').'_database_'),
+            'prefix' => env('REDIS_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_') . '_database_'),
         ],
 
         'default' => [

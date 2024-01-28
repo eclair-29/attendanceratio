@@ -4,9 +4,10 @@ namespace App\Exports;
 
 use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithStrictNullComparison;
 
-class AttendanceDownload implements FromArray, WithHeadings, WithStrictNullComparison
+class AttendanceDownload implements FromArray, WithHeadings, WithStrictNullComparison, ShouldAutoSize
 {
     public $ratio;
 

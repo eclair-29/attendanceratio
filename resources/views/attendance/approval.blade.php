@@ -25,11 +25,14 @@
                     <form action="{{ route('rejection', $approval->id) }}" method="POST" class="mb-0">
                         @csrf
                         @method('PUT')
-                        <div class="input-group py-3">
+                        <div class="input-group pt-3">
                             <input type="text" class="form-control" placeholder="Reason on rejection" name="reason">
                             <button class="btn btn-outline-dark" id="rejection_reason_btn">Post
                                 Rejection</button>
                         </div>
+                        @error('reason')
+                            <div class="form-text text-danger">{{ $message }}</div>
+                        @enderror
                     </form>
                 </x-card>
                 @endif

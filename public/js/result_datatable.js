@@ -66,12 +66,27 @@ function tableDrawCallback(settings) {
         });
 }
 
+function roundOffCols() {
+    return [
+        {
+            render: function (data, type, row) {
+                return data !== 0 ? data.toFixed(2) : 0;
+            },
+            targets: [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+        },
+    ];
+}
+
 let result = new DataTable("#result", {
     data: [],
     pageLength: 25,
     columns: cols,
     drawCallback: tableDrawCallback,
     orderCellsTop: true,
+    columnDefs: roundOffCols(),
+    fixedColumns: {
+        left: 1,
+    },
 });
 
 const entries = $("#result_length");

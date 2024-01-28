@@ -22,13 +22,13 @@
             <th scope="col" rowspan="2">UT%</th>
         </tr>
         <tr id="filters">
-            <th scope="col"></th>
+            <th>&nbsp;</th>
             <!-- <th scope="col">Staff</th> -->
-            <th scope="col">Division</th>
+            <th scope="col" rowspan="0">Division</th>
             <th scope="col">Dept.</th>
             <th scope="col">Section</th>
             <th scope="col">Entity</th>
-            <th scope="col" colspan="12"></th>
+            <!-- <th scope="col" colspan="">&nbsp;</th> -->
         </tr>
     </thead>
     <tbody>

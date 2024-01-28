@@ -4,13 +4,14 @@ namespace App\Imports;
 
 use Carbon\Carbon;
 use App\Models\Ratio;
+use App\Models\Series;
 use App\Models\Attendance;
 use Illuminate\Support\Str;
 use App\Models\BatchTracker;
-use App\Models\Series;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Events\AfterBatch;
+use Maatwebsite\Excel\Concerns\WithLimit;
 use Maatwebsite\Excel\Events\AfterImport;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 use Maatwebsite\Excel\Concerns\Importable;
@@ -18,13 +19,15 @@ use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Events\BeforeImport;
 use Maatwebsite\Excel\Events\ImportFailed;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Maatwebsite\Excel\Concerns\WithUpserts;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Maatwebsite\Excel\Concerns\WithValidation;
+use Maatwebsite\Excel\Concerns\WithMappedCells;
 use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
-use Maatwebsite\Excel\Concerns\RegistersEventListeners;
 use Maatwebsite\Excel\Concerns\WithCalculatedFormulas;
-use Maatwebsite\Excel\Concerns\WithMappedCells;
-use Maatwebsite\Excel\Concerns\WithUpserts;
+use Maatwebsite\Excel\Concerns\RegistersEventListeners;
+
 
 class AttendanceUpload implements
     ToModel,
@@ -39,10 +42,12 @@ class AttendanceUpload implements
     use Importable, RegistersEventListeners;
 
     public $fileLabel;
+    public $fileDetails;
 
-    public function __construct(string $fileLabel)
+    public function __construct(string $fileLabel, $fileDetails)
     {
         $this->fileLabel = $fileLabel;
+        $this->fileDetails = $fileDetails;
     }
 
     /**
@@ -53,55 +58,55 @@ class AttendanceUpload implements
     public function model(array $row)
     {
         if (Str::contains($this->fileLabel, 'PR')) {
-            if (!isset($row['id_no']) || Str::contains($row['id_no'], ['PREGNANT', 'Note', 'Working', 'SL/', 'Late'])) {
+            if (!isset($row['ID NO.']) || Str::contains($row['ID NO.'], ['PREGNANT', 'Note', 'Working', 'SL/', 'Late'])) {
                 return null;
             }
         }
 
         $attendance = Str::contains($this->fileLabel, 'PR')
             ? new Ratio([
-                'series_id' => '2023_12_' . $row['id_no'],
-                'series' => $row['series'],
-                'staff_code' => $row['id_no'],
-                'entity' => $row['entity'],
-                'division' => $row['division'],
-                'dept' => $row['dept'],
-                'section' => $row['section'],
-                'shift_type' => $row['shift'],
-                'working_days' => $row['working_days'],
-                'total_absent' => $row['days_of_absent'],
-                'absent_ratio' => $row['absent_ratio'] * 100,
-                'attendance_ratio' => $row['ratio'] * 100,
-                'sl_percentage' => $row['sl_ratio'] * 100,
-                'vl_percentage' => ($row['vl_ratio'] + $row['el_ratio']) * 100,
-                'late_percentage' => $row['late_ratio'] * 100,
-                'early_exit_percentage' => $row['ut_ratio'] * 100,
-                'lwop_percentage' => $row['ua_ratio'] * 100,
-                'total_sl' => $row['sl'],
-                'total_vl' => $row['vl'] + $row['el'],
-                'total_late' => $row['late'],
-                'total_early_exit' => $row['ut'],
-                'total_lwop' => $row['ua']
+                'series_id' => $row['SERIES'] . $row['ID NO.'],
+                'series' => $row['SERIES'],
+                'staff_code' => $row['ID NO.'],
+                'entity' => $row['ENTITY'],
+                'division' => $row['DIVISION'],
+                'dept' => $row['DEPT'] ?? $row['DEPARTMENT'],
+                'section' => $row['SECTION'],
+                'shift_type' => $row['SHIFT'],
+                'working_days' => $row['Working Days'] ?? $row['WORKING DAYS'],
+                'total_absent' => $row['Days of Absent'] ?? $row['DAYS OF ABSENT'],
+                'absent_ratio' => ($row['Absent Ratio'] ?? $row['ABSENT RATIO']) * 100,
+                'attendance_ratio' => ($row['Ratio'] ?? $row['RATIO']) * 100,
+                'sl_percentage' => $row['SL %'] * 100,
+                'vl_percentage' => ($row['VL %'] + $row['EL %']) * 100,
+                'late_percentage' => $row['LATE %'] * 100,
+                'early_exit_percentage' => $row['UT %'] * 100,
+                'lwop_percentage' => $row['UA %'] * 100,
+                'total_sl' => $row['SL'],
+                'total_vl' => $row['VL'] + $row['EL'],
+                'total_late' => $row['LATE'],
+                'total_early_exit' => $row['UT'],
+                'total_lwop' => $row['UA']
             ])
             : new Attendance([
-                'staff_code' => $row['employee_code'],
-                'date' => Carbon::parse(Date::excelToDateTimeObject($row['date']))->toDateString(),
-                'entity' => $row['entity'],
-                'shift' => $row['shift'],
-                'shift_st' => $row['shift_st'],
-                'att_st' => $row['att_st'],
-                'shift_end' => $row['shift_end'],
-                'att_end' => $row['att_end'],
-                'late' => $row['late'],
-                'early_exit' => $row['early_exit'],
-                'holiday' => $row['holiday'],
-                'leave_type' => $row['leave_type'],
-                'np' => $row['np'],
-                'other_leaves' => $row['other_leaves'],
-                'tardy' => $row['tardy'],
-                'ut' => $row['ut'],
-                'lwop' => $row['lwop'],
-                'adjust' => $row['adjustment'],
+                'staff_code' => $row['EMPLOYEE CODE'],
+                'date' => Carbon::parse(Date::excelToDateTimeObject($row['DATE']))->toDateString(),
+                'entity' => $row['ENTITY'],
+                'shift' => $row['SHIFT'],
+                'shift_st' => $row['SHIFT ST'],
+                'att_st' => $row['ATT. ST'],
+                'shift_end' => $row['SHIFT END'],
+                'att_end' => $row['ATT. END'],
+                'late' => $row['LATE'],
+                'early_exit' => $row['EARLY EXIT'],
+                'holiday' => $row['HOLIDAY'],
+                'leave_type' => $row['LEAVE TYPE'],
+                'np' => $row['NP'],
+                'other_leaves' => $row['OTHER LEAVES'],
+                'tardy' => $row['TARDY'],
+                'ut' => $row['UT'],
+                'lwop' => $row['LWOP'],
+                'adjust' => $row['ADJUSTMENT'],
             ]);
 
         return $attendance;
@@ -135,9 +140,10 @@ class AttendanceUpload implements
     public function beforeImport(BeforeImport $event)
     {
         clearQueueTables('attendance');
+        $batchSize = Str::contains($this->fileLabel, 'PR') ? 100 : 3000;
 
         $totalRows = array_values($event->getReader()->getTotalRows())[0];
-        $batchCount = ceil($totalRows / 3000);
+        $batchCount = ceil($totalRows / $batchSize);
 
         BatchTracker::create(['current_batch_count' => $batchCount, 'total_batch_count' => $batchCount, 'type' => 'attendance']);
     }
@@ -188,6 +194,9 @@ class AttendanceUpload implements
             $latePercentage = ($totalLate / $attendance->working_days) * 100;
             $earlyExitPercentage = ($totalEarlyExit / $attendance->working_days) * 100;
             $lwopPercentage = ($totalLwop / $attendance->working_days) * 100;
+
+            // if ($attendanceRatio > 100) $attendanceRatio = 100;
+            // if ($absentRatio < 0)  $absentRatio = 0;
 
             Ratio::upsert([
                 'series_id' => $attendance->series_id,
@@ -246,6 +255,13 @@ class AttendanceUpload implements
     {
         $recentSeriesRatio = Ratio::orderBy('id', 'desc')->first();
         Series::updateOrCreate(['series' => $recentSeriesRatio->series], ['series' => $recentSeriesRatio->series]);
+
+        saveUploadedFile(
+            $this->fileDetails['fileLabel'],
+            $this->fileDetails['fileSize'],
+            $this->fileDetails['filePath'],
+            $this->fileDetails['fileType']
+        );
         // clearQueueTables('attendance');
         // DB::statement("ALTER TABLE batch_trackers AUTO_INCREMENT = 1");
         // DB::table('vw_consolidated_attendance')->truncate();
