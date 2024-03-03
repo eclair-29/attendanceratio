@@ -14,7 +14,6 @@
     <link rel="dns-prefetch" href="//fonts.bunny.net">
     <link href="https://fonts.googleapis.com/css?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 
-
     <!-- Styles -->
     <link rel="stylesheet" href="{{ asset('css/libs/datatables.css') }}">
     <link rel="stylesheet" href="{{ asset('css/libs/bootstrap.css') }}">
@@ -50,7 +49,8 @@
                     </ul>
 
                     <!-- Right Side Of Navbar -->
-                    @if (!Route::is('notifapproval'))
+                    @if (!Route::is('notifications.approval') || !Route::is('notifications.feedback') ||
+                    !Route::is('notifications.download'))
                     <ul class="navbar-nav ms-auto">
                         <!-- Authentication Links -->
                         @guest
@@ -69,6 +69,9 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('register') }}">{{ __('Approval Status') }}</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('utilities.bu') }}">{{ __('Mailing List') }}</a>
+                        </li>
                         <li class="nav-item dropdown">
                             <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button"
                                 data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
@@ -76,6 +79,10 @@
                             </a>
 
                             <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                                <a class="dropdown-item" href="{{ route('logout') }}" onclick="event.preventDefault();
+                                                     document.getElementById('logout-form').submit();">
+                                    {{ __('Reset Password') }}
+                                </a>
                                 <a class="dropdown-item" href="{{ route('logout') }}" onclick="event.preventDefault();
                                                      document.getElementById('logout-form').submit();">
                                     {{ __('Logout') }}
@@ -104,6 +111,7 @@
 </script>
 <script src="{{ asset('js/result_datatable.js') }}"></script>
 <script src="{{ asset('js/filehistory.js') }}"></script>
+<script src="{{ asset('js/divisionlist.js') }}"></script>
 <script src="{{ asset('js/progress.js') }}"></script>
 <script src="{{ asset('js/notification.js') }}"></script>
 <script src="{{ asset('js/export.js') }}"></script>

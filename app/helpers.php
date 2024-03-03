@@ -4,6 +4,7 @@ use App\Models\Ratio;
 use App\Models\Series;
 use App\Models\BuPerDiv;
 use App\Models\Attendance;
+use Illuminate\Support\Str;
 use App\Models\BatchTracker;
 use App\Models\UploadedFile;
 use App\Models\ApprovalPerDiv;
@@ -50,7 +51,6 @@ function notifyInitial($division, $seriesId, $notifMsg, $subject)
             ->where('id', $seriesId)
             ->first();
 
-
         foreach ($buPerDivs as $buPerDiv) {
             $ncflRatioPerDiv = getRatioPerDiv($seriesDetails->series, $buPerDiv->division, 'NCFL');
 
@@ -93,6 +93,7 @@ function notifyInitial($division, $seriesId, $notifMsg, $subject)
                     . "&subject=" . str_replace(" ", "%20", $subject)
                     . "&division=" . str_replace(" ", "%20", $division)
                     . "&series_id=" . $approvalSeriesId . "&"
+                    . "&series=" . $seriesId . "&"
                     .  implode("&", $ncflJsonQueryString)
                     . "&" .  implode("&", $npflJsonQueryString)
             );
@@ -139,6 +140,25 @@ function getOverallPerDiv($series, $entity)
     );
 }
 
+function getGrandTotalPerDiv($series)
+{
+    return DB::select(
+        "SELECT 
+                division,
+                avg(attendance_ratio) as ratio,
+                avg(absent_ratio) as absent_ratio,
+                avg(sl_percentage) as sl_percentage,
+                avg(vl_percentage) as vl_percentage,
+                avg(lwop_percentage) as lwop_percentage,
+                avg(late_percentage) as late_percentage,
+                avg(early_exit_percentage) as early_exit_percentage
+            FROM hrardb.ratios
+            WHERE series = ?
+            GROUP BY division",
+        [$series]
+    );
+}
+
 function getFileDetails($input, $type)
 {
     return [
@@ -159,4 +179,22 @@ function saveUploadedFile($fileLabel, $fileSize, $filePath, $fileType)
         'path' => $filePath,
         'type' => $fileType,
     ]);
+}
+
+function getSuperConfidentials()
+{
+    $superConfidentials = DB::connection('hris')->select("SELECT FCEMPNO FROM MASTER.MASTERDATA WHERE FNEMPTYPEID = 3 AND FCREASON_FOR_LEAVING = '';");
+
+    $ids = array();
+
+    foreach ($superConfidentials as $superConfidential) {
+        $ids[] = $superConfidential->FCEMPNO;
+    }
+
+    return $ids;
+}
+
+function cell($row)
+{
+    return Str::title($row);
 }

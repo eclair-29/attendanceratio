@@ -33,7 +33,7 @@ return new class extends Migration
             $table->string('tardy')->nullable();
             $table->string('ut')->nullable();
             $table->string('lwop')->nullable();
-            $table->string('adjust');
+            $table->string('adjust')->nullable();
             $table->timestamps();
         });
     }

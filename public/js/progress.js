@@ -20,7 +20,7 @@ function setCleared(interval) {
 
 function clearBatchTables(type) {
     $.ajax({
-        url: `${baseUrl}/clearbatchtables?type=${type}`,
+        url: `${baseUrl}/clear?type=${type}`,
         type: "GET",
         success: function (response) {
             console.log(response);
@@ -31,12 +31,26 @@ function clearBatchTables(type) {
     });
 }
 
+function setProgressError(id, error, type) {
+    id.children(".progress-bar").attr("class", `progress-bar bg-danger`);
+
+    setTimeout(() => {
+        if (!alert("Missing File Fields: " + error)) {
+            clearBatchTables(type);
+            location.reload();
+        }
+    }, 500);
+}
+
 const currentPath = window.location.pathname;
 
 function callAjax(type, interval, id) {
     const isAuthRoutes =
-        currentPath.includes("login") || currentPath.includes("register");
-
+        currentPath.includes("login") ||
+        currentPath.includes("register") ||
+        currentPath.includes("approval") ||
+        currentPath.includes("feedback") ||
+        currentPath.includes("export/division");
     if (!isAuthRoutes) {
         $.ajax({
             type: "GET",
@@ -47,6 +61,10 @@ function callAjax(type, interval, id) {
                     let pendingJobs = parseInt(response.current_batch_count);
                     let finishedJobs = totalJobs - pendingJobs;
                     let percentage = 0;
+
+                    if (response.error) {
+                        setProgressError(id, response.error, type);
+                    }
 
                     if (pendingJobs === 0) {
                         percentage = 100;
@@ -77,7 +95,7 @@ function callAjax(type, interval, id) {
                 }
             },
             error: function (error) {
-                alert("Error uploading file. Pleae contact ISD for support.");
+                // alert("Error uploading file. Please contact ISD for support.");
             },
         });
         return;

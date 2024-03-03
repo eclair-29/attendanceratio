@@ -2,6 +2,7 @@
 create view hrardb.vw_consolidated_attendance as 
 select 
 	a.staff_code,
+    sbd.staff,
     a.entity,
     sbd.shift_type,
     sbd.dept,

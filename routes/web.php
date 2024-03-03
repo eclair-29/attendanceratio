@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\MailerController;
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\UtilitiesController;
 
 /*
 |--------------------------------------------------------------------------
@@ -15,18 +16,31 @@ use App\Http\Controllers\AttendanceController;
 |
 */
 
-Route::get('/', [AttendanceController::class, 'index']);
-Route::get('/export', [AttendanceController::class, 'export'])->name('export');
-Route::get('/downloadfile', [AttendanceController::class, 'downloadFile'])->name('downloadfile');
-Route::get('/clearbatchtables', [AttendanceController::class, 'clearBatchingTables'])->name('clearbatchtables');
-Route::get('/progress', [AttendanceController::class, 'getProgress'])->name('progress');
-Route::get('/series', [AttendanceController::class, 'getSeries'])->name('series');
-Route::get('/ratiobyseries', [AttendanceController::class, 'getRatioBySeries'])->name('ratiobyseries');
-Route::get('/sendnotification', [MailerController::class, 'sendMailNotif'])->name('sendnotification');
-Route::get('/notifapproval', [MailerController::class, 'getNotifApproval'])->name('notifapproval');
-Route::put('/rejection/{id}', [MailerController::class, 'postRejectionReason'])->name('rejection');
-Route::post('/uploadbase', [AttendanceController::class, 'uploadBase'])->name('uploadbase');
-Route::post('/upload', [AttendanceController::class, 'upload'])->name('upload');
+Route::controller(MailerController::class)->group(function () {
+    Route::get('/notifications/approval', 'getApprovalNotification')->name('notifications.approval');
+    Route::get('/notifications/feedback', 'getRejectionFeedback')->name('notifications.feedback');
+    Route::get('/notifications/download', 'downloadRatioByDivision')->name('notifications.download');
+    Route::get('/notifications/send', 'sendMailNotification')->name('notifications.send');
+    Route::put('/notifications/rejection/{id}', 'postRejectionReason')->name('notifications.rejection');
+});
+
+Route::controller(AttendanceController::class)->group(function () {
+    Route::get('/', 'index');
+    Route::get('/export/division', 'exportByDivision')->name('export.division');
+    Route::get('/export/series', 'exportBySeries')->name('export.series');
+    Route::get('/download', 'downloadUploadedFile')->name('download');
+    Route::get('/clear', 'clearBatchingTables')->name('clear');
+    Route::get('/progress', 'getFileUploadProgress')->name('progress');
+    Route::get('/series', 'getSeries')->name('series');
+    Route::get('/ratio/series', 'getRatioBySeries')->name('ratio.series');
+    Route::post('/upload/base', 'uploadBase')->name('upload.base');
+    Route::post('/upload/attendance', 'uploadAttendance')->name('upload.attendance');
+});
+
+Route::controller(UtilitiesController::class)->group(function () {
+    Route::get('/utilities/bu', 'editBuMalingAddress')->name('utilities.bu');
+    Route::put('/utilities/bu/{id}', 'updateBuMailingAddress')->name('utilities.bu.update');
+});
 
 Auth::routes();
 

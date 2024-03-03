@@ -17,7 +17,8 @@ return new class extends Migration
             $table->id();
             $table->string('series_id')->unique();
             $table->string('series');
-            $table->string('staff_code')->unique();
+            $table->string('staff_code');
+            $table->string('leave_type')->nullable();
             $table->string('staff')->nullable();
             $table->string('entity');
             $table->string('shift_type');

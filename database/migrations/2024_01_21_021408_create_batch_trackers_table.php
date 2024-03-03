@@ -18,6 +18,7 @@ return new class extends Migration
             $table->integer('total_batch_count');
             $table->integer('current_batch_count');
             $table->string('type');
+            $table->string('error')->nullable();
             $table->timestamps();
         });
     }

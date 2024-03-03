@@ -12,34 +12,40 @@ use App\Models\Series;
 
 class MailerController extends Controller
 {
-    public function sendMailNotif(Request $request)
+    public function sendMailNotification(Request $request)
     {
         $seriesDetails = Series::where("id", $request->query('seriesid'))
             ->first();
 
-        $divsNeedsApprovals = ApprovalPerDiv::where('series', $seriesDetails->series)
-            ->where('status', 'pending')
-            ->orWhere(function ($query) {
-                $query->where('status', 'rejected')
-                    ->where('reason', '');
-            })
-            ->where('is_expired', 'no')
-            ->orderBy('division', 'asc')
-            ->get();
-
         $overallNcfl = getOverallPerDiv($seriesDetails->series, 'NCFL');
         $overallNpfl = getOverallPerDiv($seriesDetails->series, 'NPFL');
+        $overall = getGrandTotalPerDiv($seriesDetails->series);
 
-        ProcessFollowup::dispatch($divsNeedsApprovals)
-            ->delay(now()->addMinutes(1));
+        $buDetails = BuPerDiv::all();
+        $to = array();
 
-        ProcessFinalRelease::dispatch($overallNcfl, $overallNpfl, $seriesDetails->series)
-            ->delay(now()->addMinutes(2));
+        foreach ($buDetails as $bu) {
+            $to[] = $bu->div_head;
+        }
+
+        ProcessFollowup::dispatch($seriesDetails->series)
+            ->delay(now()->addHours(9));
+
+        ProcessFinalRelease::dispatch($overallNcfl, $overall, $to, $seriesDetails->series)
+            ->delay(now()->addHours(48));
 
         return notifyInitial($request->query('division'), $request->query('seriesid'), $request->notifMsg, $request->subject);
     }
 
-    public function getNotifApproval(Request $request)
+    public function downloadRatioByDivision(Request $request)
+    {
+        return view('attendance.download', [
+            'division' => $request->query('division'),
+            'series' => $request->query('series'),
+        ]);
+    }
+
+    public function getApprovalNotification(Request $request)
     {
         $approval = ApprovalPerDiv::where('division', $request->query('division'))
             ->where('series_id', $request->query('series'))
@@ -53,6 +59,11 @@ class MailerController extends Controller
         return view('attendance.approval', ['approval' => $approval]);
     }
 
+    public function getRejectionFeedback()
+    {
+        return view('attendance.feedback');
+    }
+
     public function postRejectionReason(Request $request, $id)
     {
         $request->validate([
@@ -61,11 +72,19 @@ class MailerController extends Controller
 
         $approvalDetails = ApprovalPerDiv::where('id', $id)->first();
 
-        $approvalDetails->update(['reason' => $request->reason]);
+        // if ($request->file('division_ratio_changes')) {
+        $fileLabel = $request->file('division_ratio_changes')->getClientOriginalName();
+        $request->file('division_ratio_changes')->storeAs('files/attendance_changes', $fileLabel);
+        // }
+
+        $approvalDetails->update([
+            'reason' => $request->reason,
+            'changes_file_path' => 'files/attendance_changes/' . $fileLabel,
+        ]);
 
         notifyHr($approvalDetails->division, $approvalDetails->status, $approvalDetails->series, $request->reason);
 
-        return redirect()->back()->with('status', 'Successfuly posted your rejection reason');;
+        return redirect('/notifications/feedback');
     }
 
     /**

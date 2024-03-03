@@ -9,14 +9,14 @@
                     <div class="card-header">{{ __('Uploader ') }}</div>
                     <ul class="list-group list-group-flush"">
                         <li class=" list-group-item">
-                        <x-uploader :action="route('uploadbase')" :input="'upload_base'"
+                        <x-uploader :action="route('upload.base')" :input="'upload_base'"
                             :inputLabel="'Upload Master File'" :btn="'base_upload_btn'" />
                         <x-uploaded-files :files="$currentUploadedBaseFile->file ?? null" :type="'base_data'" />
                         <x-progressbar :id="'base_upload_progress'" />
                         </li>
 
                         <li class="list-group-item">
-                            <x-uploader :action="route('upload')" :input="'upload'"
+                            <x-uploader :action="route('upload.attendance')" :input="'upload'"
                                 :inputLabel="'Upload Raw Attendance File'" :btn="'upload_btn'" />
                             <x-uploaded-files :files="$recentUploadedAttendanceFile ?? []" :type="'attendance'" />
                             <x-progressbar :id="'upload_progress'" />
@@ -33,7 +33,7 @@
     </div>
 </div>
 
-<x-popup :id="'uploaded_files_history'" :title="'Uploaded Files History'">
+<x-popup :size="'xl'" :id="'uploaded_files_history'" :title="'Uploaded Files History'">
     <table class="table table-bordered py-3" id="uploaded_files_history_table" width="100%">
         <thead>
             <tr>
@@ -51,8 +51,8 @@
                     {{ $row->id }}
                 </td>
                 <td>
-                    <a href="{{ route('downloadfile', ['file' => $row->file, 'type' => 'attendance']) }}"
-                        class="link-success">
+                    <a href="{{ route('download', ['file' => $row->file, 'type' => 'attendance']) }}"
+                        class="link-success fw-bold">
                         {{ $row->file }}
                     </a>
                 </td>

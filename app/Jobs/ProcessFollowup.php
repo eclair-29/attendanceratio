@@ -15,7 +15,7 @@ class ProcessFollowup implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $divsNeedsApprovals;
+    public $series;
     public $tries = 1;
 
     /**
@@ -23,9 +23,9 @@ class ProcessFollowup implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($divsNeedsApprovals)
+    public function __construct($series)
     {
-        $this->divsNeedsApprovals = $divsNeedsApprovals;
+        $this->series = $series;
     }
 
     /**
@@ -35,7 +35,18 @@ class ProcessFollowup implements ShouldQueue
      */
     public function handle()
     {
-        foreach ($this->divsNeedsApprovals as $approval) {
+        $seriesDetails = Series::where('series', $this->series);
+        $divsNeedsApprovals = ApprovalPerDiv::where('series', $this->series)
+            ->where('status', 'pending')
+            ->orWhere(function ($query) {
+                $query->where('status', 'rejected')
+                    ->whereNull('reason');
+            })
+            ->where('is_expired', 'no')
+            ->orderBy('division', 'asc')
+            ->get();
+
+        foreach ($divsNeedsApprovals as $approval) {
             $ncflRatioPerDiv = getRatioPerDiv($approval->series, $approval->division, 'NCFL');
 
             $npflRatioPerDiv = getRatioPerDiv($approval->series, $approval->division, 'NPFL');
@@ -47,7 +58,7 @@ class ProcessFollowup implements ShouldQueue
 
             $to = $divisionHeadMail->div_head;
             $division = $approval->division;
-            $notifMsg = 'A gentle followup on the approval of your attendance ratio';
+            $notifMsg = 'A gentle follow up to confirm your attendance ratio. Appreciate receiving your feedback within 24 hrs or else we will consider this final.';
             $subject = 'Followup';
             $address = "http://10.216.2.202/hrar_notifier/notify_initial.php";
             $series = $approval->series;
@@ -73,6 +84,7 @@ class ProcessFollowup implements ShouldQueue
                     . "&subject=" . str_replace(" ", "%20", $subject)
                     . "&division=" . str_replace(" ", "%20", $division)
                     . "&series_id=" . $approvalSeriesId . "&"
+                    . "&series=" . $seriesDetails->id . "&"
                     .  implode("&", $ncflJsonQueryString)
                     . "&" .  implode("&", $npflJsonQueryString)
             );

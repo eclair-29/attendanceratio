@@ -4,6 +4,7 @@ const cols = [
     { data: "dept" },
     { data: "section" },
     { data: "entity" },
+    { data: "staff" },
     { data: "attendance_ratio" },
     { data: "absent_ratio" },
     { data: "total_sl" },
@@ -72,7 +73,7 @@ function roundOffCols() {
             render: function (data, type, row) {
                 return data !== 0 ? data.toFixed(2) : 0;
             },
-            targets: [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+            targets: [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17],
         },
     ];
 }
@@ -106,24 +107,31 @@ search.detach().appendTo(".table-top-controls");
 search.wrap(tableTopRightControls);
 
 function getRatioBySeries(id) {
+    const spinner = $("#attendance_table_loading");
+    spinner.attr("hidden", false);
+
+    // setTimeout(() => {
     $.ajax({
-        url: `${baseUrl}/ratiobyseries?series_id=${id}`,
+        url: `${baseUrl}/ratio/series?series_id=${id}`,
         type: "GET",
         success: function (response) {
+            spinner.attr("hidden", true);
             result.clear().draw();
             result.rows.add(response.data).draw();
             exportBtn.attr("class", "btn btn-outline-dark");
             exportBtn.attr(
                 "href",
-                `${baseUrl}/export?series_id=${seriesSelect.val()}`
+                `${baseUrl}/export/series?series_id=${seriesSelect.val()}`
             );
             clearFilterBtn.attr("disabled", false);
             initNotifBtn.attr("disabled", false);
         },
         error: function (error) {
             alert("Error fetching data");
+            spinner.attr("hidden", true);
         },
     });
+    // }, 3000);
 }
 
 seriesSelect.on("change", function () {

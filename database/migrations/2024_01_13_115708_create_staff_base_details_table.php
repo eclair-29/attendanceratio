@@ -15,12 +15,14 @@ return new class extends Migration
     {
         Schema::create('staff_base_details', function (Blueprint $table) {
             $table->id();
-            $table->string('staff_code')->unique();
+            $table->string('staff_code')->unique()->nullable();
+            $table->string('staff');
+            $table->string('email')->nullable();
             $table->string('status');
             $table->string('shift_type');
             $table->string('dept');
-            $table->string('section')->nullable();
-            $table->string('division')->nullable();
+            $table->string('section');
+            $table->string('division');
             $table->timestamps();
         });
     }

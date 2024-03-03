@@ -2,6 +2,7 @@
 
 namespace App\Imports;
 
+use Throwable;
 use Carbon\Carbon;
 use App\Models\Ratio;
 use App\Models\Series;
@@ -27,7 +28,7 @@ use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithCalculatedFormulas;
 use Maatwebsite\Excel\Concerns\RegistersEventListeners;
-
+use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
 
 class AttendanceUpload implements
     ToModel,
@@ -37,7 +38,9 @@ class AttendanceUpload implements
     ShouldQueue,
     WithEvents,
     WithCalculatedFormulas,
-    WithUpserts
+    WithUpserts,
+    WithValidation,
+    SkipsEmptyRows
 {
     use Importable, RegistersEventListeners;
 
@@ -57,26 +60,36 @@ class AttendanceUpload implements
      */
     public function model(array $row)
     {
-        if (Str::contains($this->fileLabel, 'PR')) {
+        if (Str::contains($this->fileLabel, config('constants.agency_prefix'))) {
+            if (Str::contains($row['IS ON MATERNITY LEAVE'], ['Yes', 'yes', 'YES'])) {
+                return null;
+            }
             if (!isset($row['ID NO.']) || Str::contains($row['ID NO.'], ['PREGNANT', 'Note', 'Working', 'SL/', 'Late'])) {
                 return null;
             }
         }
 
-        $attendance = Str::contains($this->fileLabel, 'PR')
+        if (Str::contains($this->fileLabel, 'PA')) {
+            if (Str::contains($row['LEAVE TYPE'], ['Maternity'])) {
+                return null;
+            }
+        }
+
+        $attendance = Str::contains($this->fileLabel, config('constants.agency_prefix'))
             ? new Ratio([
-                'series_id' => $row['SERIES'] . $row['ID NO.'],
+                'series_id' => $row['SERIES'] . '_' . $row['ID NO.'],
                 'series' => $row['SERIES'],
                 'staff_code' => $row['ID NO.'],
+                'staff' => $row['NAME'],
                 'entity' => $row['ENTITY'],
                 'division' => $row['DIVISION'],
-                'dept' => $row['DEPT'] ?? $row['DEPARTMENT'],
+                'dept' => $row['DEPARTMENT'],
                 'section' => $row['SECTION'],
                 'shift_type' => $row['SHIFT'],
-                'working_days' => $row['Working Days'] ?? $row['WORKING DAYS'],
-                'total_absent' => $row['Days of Absent'] ?? $row['DAYS OF ABSENT'],
-                'absent_ratio' => ($row['Absent Ratio'] ?? $row['ABSENT RATIO']) * 100,
-                'attendance_ratio' => ($row['Ratio'] ?? $row['RATIO']) * 100,
+                'working_days' => $row[cell('WORKING DAYS')],
+                'total_absent' => $row['Days of Absent'],
+                'absent_ratio' => $row[cell('ABSENT RATIO')] * 100,
+                'attendance_ratio' => $row[cell('RATIO')] * 100,
                 'sl_percentage' => $row['SL %'] * 100,
                 'vl_percentage' => ($row['VL %'] + $row['EL %']) * 100,
                 'late_percentage' => $row['LATE %'] * 100,
@@ -112,35 +125,62 @@ class AttendanceUpload implements
         return $attendance;
     }
 
+    public function isEmptyWhen(array $row): bool
+    {
+        if (Str::contains($this->fileLabel, config('constants.agency_prefix'))) {
+            return Str::contains($row['IS ON MATERNITY LEAVE'], ['Yes', 'yes', 'YES']) ||
+                !isset($row['ID NO.']) || !Str::of($row['ID NO.'])->test('/^\d{7}$/');
+        }
+
+        if (Str::contains($this->fileLabel, 'PA')) {
+            return Str::contains($row['LEAVE TYPE'], ['Maternity']);
+        }
+    }
+
+    public function rules(): array
+    {
+        $rules = Str::contains($this->fileLabel, config('constants.agency_prefix'))
+            ? [
+                'UT %' => [
+                    'required',
+                    'numeric',
+                    'between:0,100'
+                ],
+            ]
+            : [];
+
+        return $rules;
+    }
+
     public function uniqueBy()
     {
-        if (Str::contains($this->fileLabel, 'PR')) {
+        if (Str::contains($this->fileLabel, config('constants.agency_prefix'))) {
             return 'series_id';
         }
     }
 
     public function headingRow(): int
     {
-        $headingRow = Str::contains($this->fileLabel, 'PR') ? 2 : 3;
+        $headingRow = Str::contains($this->fileLabel, config('constants.agency_prefix')) ? 2 : 3;
         return $headingRow;
     }
 
     public function batchSize(): int
     {
-        $batch = Str::contains($this->fileLabel, 'PR') ? 100 : 3000;
+        $batch = Str::contains($this->fileLabel, config('constants.agency_prefix')) ? 100 : 3000;
         return $batch;
     }
 
     public function chunkSize(): int
     {
-        $chunk = Str::contains($this->fileLabel, 'PR') ? 100 : 3000;
+        $chunk = Str::contains($this->fileLabel, config('constants.agency_prefix')) ? 100 : 3000;
         return $chunk;
     }
 
     public function beforeImport(BeforeImport $event)
     {
         clearQueueTables('attendance');
-        $batchSize = Str::contains($this->fileLabel, 'PR') ? 100 : 3000;
+        $batchSize = Str::contains($this->fileLabel, config('constants.agency_prefix')) ? 100 : 3000;
 
         $totalRows = array_values($event->getReader()->getTotalRows())[0];
         $batchCount = ceil($totalRows / $batchSize);
@@ -202,11 +242,13 @@ class AttendanceUpload implements
                 'series_id' => $attendance->series_id,
                 'series' => $attendance->series,
                 'staff_code' => $attendance->staff_code,
+                'staff' => $attendance->staff,
                 'entity' => $attendance->entity,
                 'division' => $attendance->division,
                 'dept' => $attendance->dept,
                 'section' => $attendance->section,
                 'shift_type' => $attendance->shift_type,
+                // 'leave_type' => $attendance->leave_type,
                 'working_days' => $attendance->working_days,
                 'total_absent' => $absentCount,
                 'absent_ratio' => $absentRatio,
@@ -223,11 +265,13 @@ class AttendanceUpload implements
                 'total_lwop' => $totalLwop
             ], ['series_id'], [
                 'staff_code',
+                'staff',
                 'series',
                 'entity',
                 'division',
                 'dept',
                 'section',
+                // 'leave_type',
                 'working_days',
                 'total_absent',
                 'absent_ratio',
@@ -253,7 +297,7 @@ class AttendanceUpload implements
 
     public function afterImport(AfterImport $event)
     {
-        $recentSeriesRatio = Ratio::orderBy('id', 'desc')->first();
+        $recentSeriesRatio = Ratio::whereNotNull('series')->orderBy('id', 'desc')->first();
         Series::updateOrCreate(['series' => $recentSeriesRatio->series], ['series' => $recentSeriesRatio->series]);
 
         saveUploadedFile(
@@ -267,8 +311,14 @@ class AttendanceUpload implements
         // DB::table('vw_consolidated_attendance')->truncate();
     }
 
-    // public function importFailed(ImportFailed $event)
-    // {
-    //     dd($event->getException()->getMessage());
-    // }
+    public function failed(Throwable $th)
+    {
+        // dd($th->getMessage());
+        // clearQueueTables('base');
+        $batchTrack = BatchTracker::where('type', 'attendance')->first();
+
+        $batchTrack->update([
+            'error' => $th->getMessage()
+        ]);
+    }
 }

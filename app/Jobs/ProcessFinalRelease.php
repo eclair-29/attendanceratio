@@ -2,8 +2,8 @@
 
 namespace App\Jobs;
 
+use App\Models\ApprovalPerDiv;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -15,7 +15,8 @@ class ProcessFinalRelease implements ShouldQueue
 
     public $tries = 1;
     public $overallNcfl;
-    public $overallNpfl;
+    public $overall;
+    public $to;
     public $series;
 
     /**
@@ -23,10 +24,11 @@ class ProcessFinalRelease implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($overallNcfl, $overallNpfl, $series)
+    public function __construct($overallNcfl, $overall, $to, $series)
     {
         $this->overallNcfl = $overallNcfl;
-        $this->overallNpfl = $overallNpfl;
+        $this->overall = $overall;
+        $this->to = $to;
         $this->series = $series;
     }
 
@@ -40,7 +42,8 @@ class ProcessFinalRelease implements ShouldQueue
         $postdata = http_build_query(
             array(
                 'overallNcfl' => $this->overallNcfl,
-                'overallNpfl' => $this->overallNpfl
+                'overall' => $this->overall,
+                'to' => $this->to
             )
         );
 
@@ -54,6 +57,8 @@ class ProcessFinalRelease implements ShouldQueue
         );
 
         $address = "http://10.216.2.202/hrar_notifier/notify_final.php";
+
+        ApprovalPerDiv::where('series', $this->series)->update(['status' => 'approved', 'is_expired' => 'yes']);
 
         $context  = stream_context_create($opts);
         file_get_contents($address . "?series=" . $this->series, false, $context);

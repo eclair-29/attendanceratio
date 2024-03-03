@@ -18,6 +18,8 @@ use App\Exports\AttendanceDownload;
 use App\Rules\NoStaffBaseDataFound;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\StaffBaseDetailsUpload;
+use App\Models\BuPerDiv;
+use App\Models\StaffBaseDetail;
 use Illuminate\Support\Facades\Session;
 
 class AttendanceController extends Controller
@@ -27,7 +29,7 @@ class AttendanceController extends Controller
         $this->middleware('auth');
     }
 
-    public function getProgress(Request $request)
+    public function getFileUploadProgress(Request $request)
     {
         $currentBatch = BatchTracker::where('type', $request->type)->first();
         return $currentBatch;
@@ -42,9 +44,12 @@ class AttendanceController extends Controller
     public function getRatioBySeries(Request $request)
     {
         $series = Series::where('id', $request->query('series_id'))->first();
+        $superConfidentials = getSuperConfidentials();
+        $staffcodes = StaffBaseDetail::pluck('staff_code')->all();
         $ratioBySeries['data'] =
             Ratio::select(
                 'staff_code',
+                'staff',
                 'division',
                 'dept',
                 'section',
@@ -62,10 +67,46 @@ class AttendanceController extends Controller
                 'late_percentage',
                 'early_exit_percentage'
             )
+            // ->whereIn('staff_code', $staffcodes)
+            ->whereNotIn('staff_code', $superConfidentials)
             ->where('series', $series->series)
             ->get();
 
         return $ratioBySeries;
+    }
+
+    public function getRatioBySeriesAndDiv(Request $request)
+    {
+        $series = Series::where('id', $request->query('series'))->first();
+        $superConfidentials = getSuperConfidentials();
+
+        $ratioBySeriesAndDiv['data'] =
+            Ratio::select(
+                'staff_code',
+                'staff',
+                'division',
+                'dept',
+                'section',
+                'entity',
+                'attendance_ratio',
+                'absent_ratio',
+                'total_sl',
+                'total_vl',
+                'total_lwop',
+                'total_late',
+                'total_early_exit',
+                'sl_percentage',
+                'vl_percentage',
+                'lwop_percentage',
+                'late_percentage',
+                'early_exit_percentage'
+            )
+            ->whereNotIn('staff_code', $superConfidentials)
+            ->where('series', $series->series)
+            ->where('division', $request->query('division'))
+            ->get();
+
+        return $ratioBySeriesAndDiv;
     }
 
     public function clearBatchingTables(Request $request)
@@ -74,7 +115,7 @@ class AttendanceController extends Controller
         return 'success';
     }
 
-    public function downloadFile(Request $request)
+    public function downloadUploadedFile(Request $request)
     {
         $file = $request->query('file');
         $type = $request->query('type') == 'attendance' ? 'raw' : 'base';
@@ -95,7 +136,7 @@ class AttendanceController extends Controller
             ->first();
 
         $recentUploadedAttendanceFile = UploadedFile::where('type', 'like', '%attendance%')
-            ->whereDate('updated_at', Carbon::today())
+            // ->whereDate('updated_at', Carbon::today())
             ->orderBy('updated_at', 'desc')
             ->get();
 
@@ -111,11 +152,40 @@ class AttendanceController extends Controller
         ]);
     }
 
-    public function export(Request $request)
+    public function exportBySeries(Request $request)
     {
         $seriesDetails = Series::where('id', $request->query('series_id'))->first();
         $ratioBySeries = $this->getRatioBySeries($request);
+
+        foreach ($ratioBySeries['data'] as $value) {
+            $value->attendance_ratio /= 100;
+            $value->absent_ratio /= 100;
+            $value->sl_percentage /=  100;
+            $value->vl_percentage /= 100;
+            $value->lwop_percentage /= 100;
+            $value->late_percentage /= 100;
+            $value->early_exit_percentage /= 100;
+        }
+
         return Excel::download(new AttendanceDownload($ratioBySeries), $seriesDetails->series . '_ratio.xlsx');
+    }
+
+    public function exportByDivision(Request $request)
+    {
+        $seriesDetails = Series::where('id', $request->query('series'))->first();
+        $ratioBySeriesAndDiv = $this->getRatioBySeriesAndDiv($request);
+
+        foreach ($ratioBySeriesAndDiv['data'] as $value) {
+            $value->attendance_ratio /= 100;
+            $value->absent_ratio /= 100;
+            $value->sl_percentage /=  100;
+            $value->vl_percentage /= 100;
+            $value->lwop_percentage /= 100;
+            $value->late_percentage /= 100;
+            $value->early_exit_percentage /= 100;
+        }
+
+        return Excel::download(new AttendanceDownload($ratioBySeriesAndDiv), $request->query('division') . ' ' . date('F Y', strtotime(str_replace('_', '-', $seriesDetails->series))) . ' Attendance Ratio.xlsx');
     }
 
     public function uploadBase(Request $request)
@@ -129,21 +199,22 @@ class AttendanceController extends Controller
         $fileType = 'base_data';
         $fileDetails = getFileDetails($requestedFile, $fileType);
 
-        DB::beginTransaction();
+        // DB::beginTransaction();
         try {
             (new StaffBaseDetailsUpload($fileDetails))
                 ->queue($request->file('upload_base')->storeAs('files/base', $fileLabel));
 
-            DB::commit();
+            // DB::commit();
         } catch (Throwable $th) {
-            DB::rollBack();
-            throw $th;
+            // DB::rollBack();
+            // throw $th;
+            dd($th->getMessage());
+            return 'Failed to upload base data due to: ' . $th->getMessage();
         }
-
         return redirect('/');
     }
 
-    public function upload(Request $request)
+    public function uploadAttendance(Request $request)
     {
         $request->validate([
             'upload' => ['required', new FileNotMatch, new NoStaffBaseDataFound],
@@ -151,7 +222,9 @@ class AttendanceController extends Controller
 
         $requestedFile = $request->file('upload');
         $fileLabel = $request->file('upload')->getClientOriginalName();
-        $fileType = Str::contains($fileLabel, 'PR') ? 'agency_attendance' : 'allsec_attendance';
+        $fileType = Str::contains($fileLabel, ['PR', 'JT', 'HAS', 'NC', 'VAC'])
+            ? 'agency_attendance'
+            : 'allsec_attendance';
         $fileDetails = getFileDetails($requestedFile, $fileType);
 
         DB::beginTransaction();

@@ -3,7 +3,7 @@
 @section('content')
 <div class="container">
     <div class="row">
-        <div class="col-8" style="margin: 20px auto;">
+        <div class="col" style="margin: 20px auto;">
             <div class="card">
                 @if ($approval->is_expired == 'yes')
                 <x-card :header="'Expired'">
@@ -22,17 +22,25 @@
                         our
                         reference, kindly tell us the reason why you rejected the result.</p>
                     <p class="card-text">Thank you!</p>
-                    <form action="{{ route('rejection', $approval->id) }}" method="POST" class="mb-0">
+                    <form action="{{ route('notifications.rejection', $approval->id) }}" enctype="multipart/form-data"
+                        method="post" class="mb-0">
                         @csrf
-                        @method('PUT')
-                        <div class="input-group pt-3">
-                            <input type="text" class="form-control" placeholder="Reason on rejection" name="reason">
-                            <button class="btn btn-outline-dark" id="rejection_reason_btn">Post
-                                Rejection</button>
+                        @method('put')
+                        <div class="pb-3">
+                            <textarea name="reason" class="form-control @error('reason') is-invalid @enderror" rows="5"
+                                placeholder="Reason for rejection"></textarea>
+                            @error('reason')
+                            <div class="form-text text-danger fw-bold">{{ $message }}</div>
+                            @enderror
                         </div>
-                        @error('reason')
-                            <div class="form-text text-danger">{{ $message }}</div>
-                        @enderror
+                        <div class="pb-3">
+                            <label for="division_ratio_changes" class="form-label">Attach File with Attendance
+                                Changes</label>
+                            <input type="file" name="division_ratio_changes" class="form-control">
+                        </div>
+                        <button class="btn btn-outline-success">
+                            Post Rejection
+                        </button>
                     </form>
                 </x-card>
                 @endif

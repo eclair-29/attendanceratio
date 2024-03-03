@@ -21,6 +21,7 @@ return new class extends Migration
             $table->string('is_expired')->nullable();
             $table->string('series');
             $table->string('reason')->nullable();
+            $table->string('changes_file_path')->nullable();
             $table->timestamps();
         });
     }

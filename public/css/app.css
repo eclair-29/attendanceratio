@@ -3,8 +3,8 @@
     border-radius: 0 !important;
     font-family: 'Poppins', sans-serif !important;
 }
-
-/* body {
+/* 
+body {
     background-image: url('../NCFLBldgBlacked.png');
     background-repeat: no-repeat;
     background-size: cover;
@@ -15,11 +15,11 @@
 }
 
 
-input, span, a, button, p, div, label {
-    font-size: 13px !important; 
+input, span, a, button, p, div, label, textarea {
+    font-size: 12px !important; 
 }
 
-input, select, a.btn {
+input, select, a.btn, textarea {
     outline: none !important;
     box-shadow: none !important;
 }
@@ -31,7 +31,7 @@ button {
 table {
   box-shadow: none !important;
   border: none !important;
-  font-size: 11px;
+  font-size: 11px !important;
 }
 
 table thead th {
@@ -133,6 +133,12 @@ tfoot th {
     font-weight: 600 !important;
 }
 
+.btn-invalid {
+    /* background-color: #dc3545; */
+    border-color: #dc3545 !important;
+    /* color: white */
+}
+
 #result {
     overflow-x: auto !important;
 }
@@ -142,9 +148,10 @@ tfoot th {
     float: none !important;
 }
 
-#uploaded_files_history_table a {
+#uploaded_files_history_table a,
+#division_list a {
     border-bottom: 1px dotted #198754;
-    cursor: pointer;
+    cursor: pointer !important;
     text-decoration: none;
 }
 
@@ -162,18 +169,61 @@ tfoot th {
 }
 
 #rejection_reason_btn {
-    border-color: #ced4da !important;
+    border-color: #ced4da;
 }
 
 #clear_filter_btn,
 #export_series_btn,
 #init_notif_btn {
     font-size: 12px !important;
-    border-color: #ced4da;
+    /* border-color: #ced4da; */
+    /* margin-right: 15px; */
+}
+
+#export_series_btn {
+    border-left: none;
+    border-right: none;
+}
+
+#init_notif_btn {
     margin-right: 15px;
 }
 
 #series {
     width: auto;
     font-size: 12px;
+}
+
+#bg {
+    height: 100vh; 
+    width: 60%; 
+    position: absolute; 
+    top: 0; 
+    right: 0;
+    background-image: url('../public/images/NCFLBldgBlacked.png');
+    background-size: cover;
+    z-index: -1;
+}
+
+#attendance_table_loading {
+    display: flex;
+    align-items: center;
+}
+
+#attendance_table_loading .spinner-border {
+    width: 1rem !important;
+    height: 1rem !important;
+    border-radius: 50% !important;
+    margin-right: 10px;
+}
+
+#headline {
+    color: #E0F7FA;
+    font-size: 48px !important;
+    font-weight: 600;
+    padding-left: 100px;
+}
+
+#login_card {
+    height: calc(100vh - 100px);
 }

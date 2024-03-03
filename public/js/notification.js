@@ -15,14 +15,15 @@ function getAlert(type, text) {
 }
 
 notifBtn.on("click", function () {
-    const subject = "For Initial Approval";
-    const notifMsg = "Please check your attendance ratio. Thank you.";
+    const subject = "For Approval";
+    const notifMsg =
+        "Kindly confirm your attendance ratio. Appreciate receiving your feedback within 24 hrs or else we will consider this final.";
     const series = $("#series").val();
 
     setNotifBtnBehavior("Sending...", true);
 
     $.ajax({
-        url: `${baseUrl}/sendnotification?subject=${toQueryString(
+        url: `${baseUrl}/notifications/send?subject=${toQueryString(
             subject
         )}&notifMsg=${toQueryString(notifMsg)}&seriesid=${series}`,
         type: "GET",
@@ -32,7 +33,7 @@ notifBtn.on("click", function () {
         },
         error: function (error) {
             setNotifBtnBehavior("Send Initial Mail", false);
-            alert("Error sending notification");
+            alert("Error sending notification", error);
         },
     });
 });
