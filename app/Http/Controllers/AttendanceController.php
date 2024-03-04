@@ -24,11 +24,6 @@ use Illuminate\Support\Facades\Session;
 
 class AttendanceController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('auth');
-    }
-
     public function getFileUploadProgress(Request $request)
     {
         $currentBatch = BatchTracker::where('type', $request->type)->first();
@@ -222,7 +217,7 @@ class AttendanceController extends Controller
 
         $requestedFile = $request->file('upload');
         $fileLabel = $request->file('upload')->getClientOriginalName();
-        $fileType = Str::contains($fileLabel, ['PR', 'JT', 'HAS', 'NC', 'VAC'])
+        $fileType = Str::contains($fileLabel, config('constants.agency_prefix'))
             ? 'agency_attendance'
             : 'allsec_attendance';
         $fileDetails = getFileDetails($requestedFile, $fileType);

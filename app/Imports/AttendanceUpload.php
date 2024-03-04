@@ -142,12 +142,107 @@ class AttendanceUpload implements
         $rules = Str::contains($this->fileLabel, config('constants.agency_prefix'))
             ? [
                 'UT %' => [
+                    'numeric',
+                    // 'between:0,100'
+                ],
+                // revisit this attribute, throwing 'validation' notice even attribute is already filled with right value
+                // 'ID NO.' => [
+                //     'required',
+                //     'regex:/(^[0-9]+$)+/'
+                // ],
+                'NAME' => [
+                    'required',
+                    // 'regex:/(^[A-Za-z ]+$)+/'
+                ],
+                'ENTITY' => [
+                    'required',
+                    'in:NCFL,NPFL'
+                ],
+                'DIVISION' => [
+                    'required',
+                ],
+                'DEPARTMENT' => [
+                    'required',
+                ],
+                'SECTION' => [
+                    'required',
+                ],
+                'SHIFT' => [
+                    'required',
+                ],
+                cell('WORKING DAYS') => [
+                    'required',
+                ],
+                'Days of Absent' => [
+                    'numeric',
+                ],
+                cell('ABSENT RATIO') => [
                     'required',
                     'numeric',
-                    'between:0,100'
                 ],
+                cell('RATIO') => [
+                    'required',
+                    'numeric',
+                ],
+                'SL %' => [
+                    'required',
+                    'numeric',
+                ],
+                'VL %' => [
+                    'required',
+                    'numeric',
+                ],
+                'EL %' => [
+                    'required',
+                    'numeric',
+                ],
+                'LATE %' => [
+                    'required',
+                    'numeric',
+                ],
+                'UA' => [
+                    'required',
+                    'numeric',
+                ],
+                'SL' => [
+                    'required',
+                    'numeric',
+                ],
+                'VL' => [
+                    'required',
+                    'numeric',
+                ],
+                'EL' => [
+                    'required',
+                    'numeric',
+                ],
+                'LATE' => [
+                    'required',
+                    'numeric',
+                ],
+                'UT' => [
+                    'required',
+                    'numeric',
+                ],
+                'UA' => [
+                    'required',
+                    'numeric',
+                ]
             ]
-            : [];
+            : [
+                'EMPLOYEE CODE' => [
+                    'required',
+                    // 'regex:/(^[0-9]+$)+/'
+                ],
+                'ENTITY' => [
+                    'required',
+                    'in:NCFL,NPFL'
+                ],
+                'EARLY EXIT' => [
+                    'required',
+                    'numeric',
+                ]
+            ];
 
         return $rules;
     }
@@ -249,20 +344,20 @@ class AttendanceUpload implements
                 'section' => $attendance->section,
                 'shift_type' => $attendance->shift_type,
                 // 'leave_type' => $attendance->leave_type,
-                'working_days' => $attendance->working_days,
-                'total_absent' => $absentCount,
-                'absent_ratio' => $absentRatio,
-                'attendance_ratio' => $attendanceRatio,
-                'sl_percentage' => $slPercentage,
-                'vl_percentage' => $vlPercentage,
-                'late_percentage' => $latePercentage,
-                'early_exit_percentage' => $earlyExitPercentage,
-                'lwop_percentage' => $lwopPercentage,
-                'total_sl' => $totalSl,
-                'total_vl' => $totalVl,
-                'total_late' => $totalLate,
-                'total_early_exit' => $totalEarlyExit,
-                'total_lwop' => $totalLwop
+                'working_days' => $attendance->working_days ?? 0.00,
+                'total_absent' => $absentCount ?? 0.00,
+                'absent_ratio' => $absentRatio ?? 0.00,
+                'attendance_ratio' => $attendanceRatio ?? 0.00,
+                'sl_percentage' => $slPercentage ?? 0.00,
+                'vl_percentage' => $vlPercentage ?? 0.00,
+                'late_percentage' => $latePercentage ?? 0.00,
+                'early_exit_percentage' => $earlyExitPercentage ?? 0.00,
+                'lwop_percentage' => $lwopPercentage ?? 0.00,
+                'total_sl' => $totalSl ?? 0.00,
+                'total_vl' => $totalVl ?? 0.00,
+                'total_late' => $totalLate ?? 0.00,
+                'total_early_exit' => $totalEarlyExit ?? 0.00,
+                'total_lwop' => $totalLwop ?? 0.00
             ], ['series_id'], [
                 'staff_code',
                 'staff',

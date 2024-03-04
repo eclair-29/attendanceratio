@@ -63,7 +63,7 @@ function notifyInitial($division, $seriesId, $notifMsg, $subject)
             $division = $buPerDiv->division;
             $notifMsg = $notifMsg;
             $subject = $subject;
-            $address = "http://10.216.2.202/hrar_notifier/notify_initial.php";
+            $address = "http://10.216.2.202/hrar_notifier_dev/notify_initial.php";
             $series = $seriesDetails->series;
             $approvalSeriesId = $series . str_replace(" ", "_", $buPerDiv->division);
 
@@ -108,7 +108,7 @@ function notifyInitial($division, $seriesId, $notifMsg, $subject)
 
 function notifyHr($division, $status, $series, $reason)
 {
-    $address = "http://10.216.2.202/hrar_notifier/notify_hr.php";
+    $address = "http://10.216.2.202/hrar_notifier_dev/notify_hr.php";
 
     file_get_contents(
         $address

@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\MailerController;
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\UsersController;
 use App\Http\Controllers\UtilitiesController;
 
 /*
@@ -25,21 +26,29 @@ Route::controller(MailerController::class)->group(function () {
 });
 
 Route::controller(AttendanceController::class)->group(function () {
-    Route::get('/', 'index');
+    Route::middleware(['auth'])->group(function () {
+        Route::get('/', 'index');
+        Route::get('/export/series', 'exportBySeries')->name('export.series');
+        Route::get('/download', 'downloadUploadedFile')->name('download');
+        Route::get('/clear', 'clearBatchingTables')->name('clear');
+        Route::get('/progress', 'getFileUploadProgress')->name('progress');
+        Route::get('/series', 'getSeries')->name('series');
+        Route::get('/ratio/series', 'getRatioBySeries')->name('ratio.series');
+        Route::post('/upload/base', 'uploadBase')->name('upload.base');
+        Route::post('/upload/attendance', 'uploadAttendance')->name('upload.attendance');
+    });
+
     Route::get('/export/division', 'exportByDivision')->name('export.division');
-    Route::get('/export/series', 'exportBySeries')->name('export.series');
-    Route::get('/download', 'downloadUploadedFile')->name('download');
-    Route::get('/clear', 'clearBatchingTables')->name('clear');
-    Route::get('/progress', 'getFileUploadProgress')->name('progress');
-    Route::get('/series', 'getSeries')->name('series');
-    Route::get('/ratio/series', 'getRatioBySeries')->name('ratio.series');
-    Route::post('/upload/base', 'uploadBase')->name('upload.base');
-    Route::post('/upload/attendance', 'uploadAttendance')->name('upload.attendance');
 });
 
 Route::controller(UtilitiesController::class)->group(function () {
     Route::get('/utilities/bu', 'editBuMalingAddress')->name('utilities.bu');
     Route::put('/utilities/bu/{id}', 'updateBuMailingAddress')->name('utilities.bu.update');
+});
+
+Route::controller(UsersController::class)->group(function () {
+    Route::get('/users/reset', 'resetPasswordEdit')->name('users.reset.edit');
+    Route::put('/users/reset/{id}', 'resetPasswordUpdate')->name('users.reset.update');
 });
 
 Auth::routes();

@@ -19,6 +19,6 @@ class FileNotMatch implements InvokableRule
     {
         $fileLabel = $value->getClientOriginalName();
 
-        if (!Str::contains($fileLabel, ['PA', 'PR', 'JT', 'HAS', 'NC', 'VAC'])) $fail('File name should contain prefix PA (for Allsec) or PR (For Agency Attendance)');
+        if (!Str::contains($fileLabel, config('constants.agency_prefix'))) $fail('File name should contain prefix PA (for Allsec) or PR, JT, HAS, VAC, NC (For Agency Attendance)');
     }
 }

@@ -29,7 +29,7 @@ class MailerController extends Controller
         }
 
         ProcessFollowup::dispatch($seriesDetails->series)
-            ->delay(now()->addHours(9));
+            ->delay(now()->addHours(12));
 
         ProcessFinalRelease::dispatch($overallNcfl, $overall, $to, $seriesDetails->series)
             ->delay(now()->addHours(48));

@@ -2,29 +2,23 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\BuPerDiv;
+use App\Http\Requests\UpdateResetPassword;
+use App\Models\User;
 use Illuminate\Http\Request;
 
-class UtilitiesController extends Controller
+class UsersController extends Controller
 {
-    public function __construct()
+    public function resetPasswordEdit()
     {
-        $this->middleware('auth');
-    }
-
-    function editBuMalingAddress()
-    {
-        $divisionList = BuPerDiv::all();
-        return view('utilities.division', ['divisionList' => $divisionList]);
-    }
-
-    function updateBuMailingAddress(Request $request, $id)
-    {
-        $division = BuPerDiv::where('id', $id)->first();
-        $division->update([
-            'div_head' => $request->division_email
+        $user = User::where('id', auth()->user()->id)->first();
+        return view('attendance.reset-password', [
+            'user' => $user
         ]);
-        return redirect('/utilities/bu')->with('status', 'Email updated successfully');
+    }
+
+    public function resetPasswordUpdate(UpdateResetPassword $request, $id)
+    {
+        dd($request->all());
     }
 
     /**

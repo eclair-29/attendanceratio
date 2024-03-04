@@ -7,10 +7,14 @@ use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use Maatwebsite\Excel\Concerns\WithColumnFormatting;
 use Maatwebsite\Excel\Concerns\RegistersEventListeners;
+use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithStrictNullComparison;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 
-class AttendanceDownload implements FromArray, WithHeadings, WithStrictNullComparison, ShouldAutoSize
+class AttendanceDownload implements FromArray, WithHeadings, WithStrictNullComparison, ShouldAutoSize, WithColumnFormatting, WithEvents
 {
     use RegistersEventListeners;
 
@@ -92,7 +96,7 @@ class AttendanceDownload implements FromArray, WithHeadings, WithStrictNullCompa
         $event->sheet->getStyle($range)->applyFromArray([
             'borders' => [
                 'allBorders' => [
-                    'borderStyle' => StyleBorder::BORDER_THIN,
+                    'borderStyle' => Border::BORDER_THIN,
                     'color' => ['argb' => '#000000'],
                 ],
             ],

@@ -8,11 +8,8 @@
                 <div class="card-header">{{ __('BU Mailing List') }}</div>
 
                 <div class="card-body">
-                    @if (session('status'))
-                    <div class="alert alert-success" role="alert">
-                        {{ session('status') }}
-                    </div>
-                    @endif
+                    <x-alert />
+
                     <table class="table table-bordered table-striped py-3" id="division_list" width="100%">
                         <thead>
                             <tr>
